@@ -1,0 +1,21 @@
+service: lecshare-api
+
+provider:
+  name: aws
+  region: us-west-2
+  memorySize: 128
+  runtime: go1.x
+
+functions:
+  hello:
+    handler: bin/hello
+    events:
+      - http:
+          path: /
+          method: get
+
+package:
+ exclude:
+   - ./**
+ include:
+   - ./bin/**
