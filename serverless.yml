@@ -7,15 +7,28 @@ provider:
   runtime: go1.x
 
 functions:
-  hello:
+  playground:
     handler: bin/hello
     events:
       - http:
           path: /
           method: get
-
+      - http:
+          path: /
+          method: post
+  graphql:
+    handler: bin/graph
+    events:
+      - http:
+          path: /query
+          method: get
+      - http:
+          path: /query
+          method: post
 package:
- exclude:
-   - ./**
- include:
-   - ./bin/**
+  exclude:
+    - ./**
+  include:
+    - ./bin/**
+plugins:
+  - serverless-offline
