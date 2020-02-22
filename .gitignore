@@ -1,4 +1,6 @@
 bin/**
 vendor
+bin
 .serverless
 *.coverprofile
+node_modules
