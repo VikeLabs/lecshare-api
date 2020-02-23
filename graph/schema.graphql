@@ -10,15 +10,15 @@ type Class {
     title: String! # Fundamentals of Programming II
     code: String! # ie CSC 115
     instructor: User
-    lectures: [Lecture]!
+    lectures: [Lecture]
 }
 
 type Lecture {
-    name: String
-    datetime: String
-    transcription: Resource
-    audio: Resource
-    duration: Int
+    name: String!
+    datetime: String!
+    # transcription: Resource
+    # audio: Resource
+    duration: Int!
 }
 
 type Resource {
@@ -26,10 +26,10 @@ type Resource {
     url: String
 }
 
-enum Role {
-    Instructor
-    Student
-}
+# enum Role {
+#     Instructor
+#     Student
+# }
 
 type User {
     firstName: String!

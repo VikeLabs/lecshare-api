@@ -50,11 +50,9 @@ type ComplexityRoot struct {
 	}
 
 	Lecture struct {
-		Audio         func(childComplexity int) int
-		Datetime      func(childComplexity int) int
-		Duration      func(childComplexity int) int
-		Name          func(childComplexity int) int
-		Transcription func(childComplexity int) int
+		Datetime func(childComplexity int) int
+		Duration func(childComplexity int) int
+		Name     func(childComplexity int) int
 	}
 
 	Query struct {
@@ -121,13 +119,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Class.Title(childComplexity), true
 
-	case "Lecture.audio":
-		if e.complexity.Lecture.Audio == nil {
-			break
-		}
-
-		return e.complexity.Lecture.Audio(childComplexity), true
-
 	case "Lecture.datetime":
 		if e.complexity.Lecture.Datetime == nil {
 			break
@@ -148,13 +139,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Lecture.Name(childComplexity), true
-
-	case "Lecture.transcription":
-		if e.complexity.Lecture.Transcription == nil {
-			break
-		}
-
-		return e.complexity.Lecture.Transcription(childComplexity), true
 
 	case "Query.classes":
 		if e.complexity.Query.Classes == nil {
@@ -267,15 +251,15 @@ type Class {
     title: String! # Fundamentals of Programming II
     code: String! # ie CSC 115
     instructor: User
-    lectures: [Lecture]!
+    lectures: [Lecture]
 }
 
 type Lecture {
-    name: String
-    datetime: String
-    transcription: Resource
-    audio: Resource
-    duration: Int
+    name: String!
+    datetime: String!
+    # transcription: Resource
+    # audio: Resource
+    duration: Int!
 }
 
 type Resource {
@@ -283,10 +267,10 @@ type Resource {
     url: String
 }
 
-enum Role {
-    Instructor
-    Student
-}
+# enum Role {
+#     Instructor
+#     Student
+# }
 
 type User {
     firstName: String!
@@ -475,14 +459,11 @@ func (ec *executionContext) _Class_lectures(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Lecture)
 	fc.Result = res
-	return ec.marshalNLecture2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx, field.Selections, res)
+	return ec.marshalOLecture2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Lecture_name(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
@@ -509,11 +490,14 @@ func (ec *executionContext) _Lecture_name(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Lecture_datetime(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
@@ -540,73 +524,14 @@ func (ec *executionContext) _Lecture_datetime(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Lecture_transcription(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
 		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Lecture",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Transcription, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
 		return graphql.Null
 	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Resource)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Lecture_audio(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Lecture",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Audio, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Resource)
-	fc.Result = res
-	return ec.marshalOResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Lecture_duration(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
@@ -633,11 +558,14 @@ func (ec *executionContext) _Lecture_duration(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_classes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2029,9 +1957,6 @@ func (ec *executionContext) _Class(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Class_instructor(ctx, field, obj)
 		case "lectures":
 			out.Values[i] = ec._Class_lectures(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2056,14 +1981,19 @@ func (ec *executionContext) _Lecture(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = graphql.MarshalString("Lecture")
 		case "name":
 			out.Values[i] = ec._Lecture_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "datetime":
 			out.Values[i] = ec._Lecture_datetime(ctx, field, obj)
-		case "transcription":
-			out.Values[i] = ec._Lecture_transcription(ctx, field, obj)
-		case "audio":
-			out.Values[i] = ec._Lecture_audio(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "duration":
 			out.Values[i] = ec._Lecture_duration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2483,41 +2413,18 @@ func (ec *executionContext) marshalNClass2ᚕᚖgithubᚗcomᚋvikelabsᚋlecsha
 	return ret
 }
 
-func (ec *executionContext) marshalNLecture2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx context.Context, sel ast.SelectionSet, v []*model.Lecture) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOLecture2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	return graphql.UnmarshalInt(v)
+}
 
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
 	}
-	wg.Wait()
-	return ret
+	return res
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -2794,31 +2701,48 @@ func (ec *executionContext) marshalOClass2ᚖgithubᚗcomᚋvikelabsᚋlecshare�
 	return ec._Class(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
-	return graphql.UnmarshalInt(v)
+func (ec *executionContext) marshalOLecture2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx context.Context, sel ast.SelectionSet, v model.Lecture) graphql.Marshaler {
+	return ec._Lecture(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	return graphql.MarshalInt(v)
-}
-
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOInt2int(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+func (ec *executionContext) marshalOLecture2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx context.Context, sel ast.SelectionSet, v []*model.Lecture) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec.marshalOInt2int(ctx, sel, *v)
-}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOLecture2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
 
-func (ec *executionContext) marshalOLecture2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx context.Context, sel ast.SelectionSet, v model.Lecture) graphql.Marshaler {
-	return ec._Lecture(ctx, sel, &v)
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOLecture2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx context.Context, sel ast.SelectionSet, v *model.Lecture) graphql.Marshaler {
@@ -2826,17 +2750,6 @@ func (ec *executionContext) marshalOLecture2ᚖgithubᚗcomᚋvikelabsᚋlecshar
 		return graphql.Null
 	}
 	return ec._Lecture(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOResource2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx context.Context, sel ast.SelectionSet, v model.Resource) graphql.Marshaler {
-	return ec._Resource(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx context.Context, sel ast.SelectionSet, v *model.Resource) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Resource(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

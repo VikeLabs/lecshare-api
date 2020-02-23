@@ -2,12 +2,6 @@
 
 package model
 
-import (
-	"fmt"
-	"io"
-	"strconv"
-)
-
 type Class struct {
 	Title      string     `json:"title"`
 	Code       string     `json:"code"`
@@ -16,11 +10,9 @@ type Class struct {
 }
 
 type Lecture struct {
-	Name          *string   `json:"name"`
-	Datetime      *string   `json:"datetime"`
-	Transcription *Resource `json:"transcription"`
-	Audio         *Resource `json:"audio"`
-	Duration      *int      `json:"duration"`
+	Name     string `json:"name"`
+	Datetime string `json:"datetime"`
+	Duration int    `json:"duration"`
 }
 
 type Resource struct {
@@ -33,45 +25,4 @@ type User struct {
 	LastName  string `json:"lastName"`
 	Suffix    string `json:"suffix"`
 	Role      string `json:"role"`
-}
-
-type Role string
-
-const (
-	RoleInstructor Role = "Instructor"
-	RoleStudent    Role = "Student"
-)
-
-var AllRole = []Role{
-	RoleInstructor,
-	RoleStudent,
-}
-
-func (e Role) IsValid() bool {
-	switch e {
-	case RoleInstructor, RoleStudent:
-		return true
-	}
-	return false
-}
-
-func (e Role) String() string {
-	return string(e)
-}
-
-func (e *Role) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Role(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Role", str)
-	}
-	return nil
-}
-
-func (e Role) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -20,6 +20,13 @@ func (r *queryResolver) Classes(ctx context.Context) ([]*model.Class, error) {
 				Suffix:    "Dr",
 				Role:      "Instructor",
 			},
+			Lectures: []*model.Lecture{
+				&model.Lecture{
+					Name:     "Introduction",
+					Datetime: "Feb, 12, 2020",
+					Duration: 3600,
+				},
+			},
 		},
 	}
 	return c, nil
