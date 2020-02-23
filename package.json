@@ -1,0 +1,24 @@
+{
+  "name": "lecshare-api",
+  "version": "1.0.0",
+  "description": "Node.js backend to host file retrieval and login in Lecshare.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VikeLabs/lecshare-api.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VikeLabs/lecshare-api/issues"
+  },
+  "homepage": "https://github.com/VikeLabs/lecshare-api#readme",
+  "devDependencies": {
+    "serverless": "^1.64.0",
+    "serverless-domain-manager": "^3.3.1",
+    "serverless-offline": "^6.0.0-alpha.67"
+  }
+}

@@ -1,0 +1,46 @@
+service: lecshare-api
+
+provider:
+  name: aws
+  region: us-west-2 # oregon
+  memorySize: 128
+  runtime: go1.x
+  # stage: production
+functions:
+  playground:
+    description: GraphQL Playground Lambda
+    handler: bin/playground
+    events:
+      - http:
+          path: /
+          method: get
+      - http:
+          path: /
+          method: post
+  graphql:
+    description: GraphQL Endpoint
+    handler: bin/graph
+    events:
+      - http:
+          path: /query
+          method: get
+      - http:
+          path: /query
+          method: post
+package:
+  # configuration of the files required in this service.
+  exclude:
+    - ./**
+  include:
+    - ./bin/**
+# custom:
+#   customDomain:
+#     domainName: api.vikelabs.ca/lecshare/
+#     stage: ci
+#     basePath: api
+#     certificateName: '*.foo.com'
+#     createRoute53Record: true
+#     endpointType: 'regional'
+#     securityPolicy: tls_1_2
+plugins:
+  - serverless-offline

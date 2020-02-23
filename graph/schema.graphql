@@ -1,0 +1,39 @@
+schema {
+    query: Query
+}
+
+type Query {
+    classes: [Class]!
+}
+
+type Class {
+    title: String! # Fundamentals of Programming II
+    code: String! # ie CSC 115
+    instructor: User
+    lectures: [Lecture]
+}
+
+type Lecture {
+    name: String!
+    datetime: String!
+    # transcription: Resource
+    # audio: Resource
+    duration: Int!
+}
+
+type Resource {
+    contentType: String
+    url: String
+}
+
+# enum Role {
+#     Instructor
+#     Student
+# }
+
+type User {
+    firstName: String!
+    lastName: String!
+    suffix: String!
+    role: String!
+}
