@@ -9,6 +9,7 @@ import (
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 )
 
+// initialization of the httpadapter, which translate APIGateway to handler.
 var h *httpadapter.HandlerAdapter
 
 func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -17,6 +18,8 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 }
 
 func main() {
+	// create a GraphQL handler and pass it to httpadapter.
 	h = httpadapter.New(playground.Handler("GraphQL playground", "/dev/query"))
+	// start the lambda.
 	lambda.Start(handler)
 }
