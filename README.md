@@ -1,3 +1,6 @@
-# lecshare-api
+# Lecshare API
+> An serverless backend service framework for the Lecshare. 
 
-Node.js backend to host file retrieval and login in Lecshare.
+The [Serverless](https://serverless.com/) framework is used for this project alongside AWS Lambda, AWS API Gateway, and Go.
+
+
