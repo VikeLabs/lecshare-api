@@ -64,11 +64,38 @@ type ComplexityRoot struct {
 		URL         func(childComplexity int) int
 	}
 
+	Transcription struct {
+		Sections func(childComplexity int) int
+	}
+
+	TranscriptionParagraph struct {
+		Confidence func(childComplexity int) int
+		Transcript func(childComplexity int) int
+		Words      func(childComplexity int) int
+	}
+
+	TranscriptionSection struct {
+		Alernatives  func(childComplexity int) int
+		LanguageCode func(childComplexity int) int
+	}
+
+	TranscriptionWord struct {
+		Confidence func(childComplexity int) int
+		Endtime    func(childComplexity int) int
+		Starttime  func(childComplexity int) int
+		Word       func(childComplexity int) int
+	}
+
 	User struct {
 		FirstName func(childComplexity int) int
 		LastName  func(childComplexity int) int
 		Role      func(childComplexity int) int
 		Suffix    func(childComplexity int) int
+	}
+
+	WordTime struct {
+		Nanos   func(childComplexity int) int
+		Seconds func(childComplexity int) int
 	}
 }
 
@@ -161,6 +188,76 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Resource.URL(childComplexity), true
 
+	case "Transcription.sections":
+		if e.complexity.Transcription.Sections == nil {
+			break
+		}
+
+		return e.complexity.Transcription.Sections(childComplexity), true
+
+	case "TranscriptionParagraph.confidence":
+		if e.complexity.TranscriptionParagraph.Confidence == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionParagraph.Confidence(childComplexity), true
+
+	case "TranscriptionParagraph.transcript":
+		if e.complexity.TranscriptionParagraph.Transcript == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionParagraph.Transcript(childComplexity), true
+
+	case "TranscriptionParagraph.words":
+		if e.complexity.TranscriptionParagraph.Words == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionParagraph.Words(childComplexity), true
+
+	case "TranscriptionSection.alernatives":
+		if e.complexity.TranscriptionSection.Alernatives == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionSection.Alernatives(childComplexity), true
+
+	case "TranscriptionSection.languageCode":
+		if e.complexity.TranscriptionSection.LanguageCode == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionSection.LanguageCode(childComplexity), true
+
+	case "TranscriptionWord.confidence":
+		if e.complexity.TranscriptionWord.Confidence == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionWord.Confidence(childComplexity), true
+
+	case "TranscriptionWord.endtime":
+		if e.complexity.TranscriptionWord.Endtime == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionWord.Endtime(childComplexity), true
+
+	case "TranscriptionWord.starttime":
+		if e.complexity.TranscriptionWord.Starttime == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionWord.Starttime(childComplexity), true
+
+	case "TranscriptionWord.word":
+		if e.complexity.TranscriptionWord.Word == nil {
+			break
+		}
+
+		return e.complexity.TranscriptionWord.Word(childComplexity), true
+
 	case "User.firstName":
 		if e.complexity.User.FirstName == nil {
 			break
@@ -188,6 +285,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Suffix(childComplexity), true
+
+	case "WordTime.nanos":
+		if e.complexity.WordTime.Nanos == nil {
+			break
+		}
+
+		return e.complexity.WordTime.Nanos(childComplexity), true
+
+	case "WordTime.seconds":
+		if e.complexity.WordTime.Seconds == nil {
+			break
+		}
+
+		return e.complexity.WordTime.Seconds(childComplexity), true
 
 	}
 	return 0, false
@@ -279,6 +390,32 @@ type User {
     role: String!
 }
 `, BuiltIn: false},
+	&ast.Source{Name: "graph/transcription.graphql", Input: `type Transcription {
+    sections: [TranscriptionSection]
+}
+
+type TranscriptionSection {
+    alernatives: [TranscriptionParagraph]!
+    languageCode: String!
+}
+
+type TranscriptionParagraph {
+    transcript: String!
+    confidence: Float!
+    words: [TranscriptionWord]!
+}
+
+type TranscriptionWord {
+    starttime: WordTime!
+    endtime: WordTime!
+    word: String!
+    confidence: Float!
+}
+
+type WordTime {
+    seconds: String!
+    nanos: Int!
+}`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -733,6 +870,343 @@ func (ec *executionContext) _Resource_url(ctx context.Context, field graphql.Col
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Transcription_sections(ctx context.Context, field graphql.CollectedField, obj *model.Transcription) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Transcription",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sections, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.TranscriptionSection)
+	fc.Result = res
+	return ec.marshalOTranscriptionSection2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionSection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionParagraph_transcript(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionParagraph) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionParagraph",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Transcript, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionParagraph_confidence(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionParagraph) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionParagraph",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Confidence, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionParagraph_words(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionParagraph) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionParagraph",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Words, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.TranscriptionWord)
+	fc.Result = res
+	return ec.marshalNTranscriptionWord2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionWord(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionSection_alernatives(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionSection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionSection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Alernatives, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.TranscriptionParagraph)
+	fc.Result = res
+	return ec.marshalNTranscriptionParagraph2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionParagraph(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionSection_languageCode(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionSection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionSection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LanguageCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionWord_starttime(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionWord) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionWord",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Starttime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.WordTime)
+	fc.Result = res
+	return ec.marshalNWordTime2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐWordTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionWord_endtime(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionWord) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionWord",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Endtime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.WordTime)
+	fc.Result = res
+	return ec.marshalNWordTime2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐWordTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionWord_word(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionWord) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionWord",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Word, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TranscriptionWord_confidence(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionWord) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "TranscriptionWord",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Confidence, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _User_firstName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -867,6 +1341,74 @@ func (ec *executionContext) _User_role(ctx context.Context, field graphql.Collec
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WordTime_seconds(ctx context.Context, field graphql.CollectedField, obj *model.WordTime) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "WordTime",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Seconds, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WordTime_nanos(ctx context.Context, field graphql.CollectedField, obj *model.WordTime) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "WordTime",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nanos, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2075,6 +2617,141 @@ func (ec *executionContext) _Resource(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var transcriptionImplementors = []string{"Transcription"}
+
+func (ec *executionContext) _Transcription(ctx context.Context, sel ast.SelectionSet, obj *model.Transcription) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transcriptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Transcription")
+		case "sections":
+			out.Values[i] = ec._Transcription_sections(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var transcriptionParagraphImplementors = []string{"TranscriptionParagraph"}
+
+func (ec *executionContext) _TranscriptionParagraph(ctx context.Context, sel ast.SelectionSet, obj *model.TranscriptionParagraph) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transcriptionParagraphImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TranscriptionParagraph")
+		case "transcript":
+			out.Values[i] = ec._TranscriptionParagraph_transcript(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "confidence":
+			out.Values[i] = ec._TranscriptionParagraph_confidence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "words":
+			out.Values[i] = ec._TranscriptionParagraph_words(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var transcriptionSectionImplementors = []string{"TranscriptionSection"}
+
+func (ec *executionContext) _TranscriptionSection(ctx context.Context, sel ast.SelectionSet, obj *model.TranscriptionSection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transcriptionSectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TranscriptionSection")
+		case "alernatives":
+			out.Values[i] = ec._TranscriptionSection_alernatives(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "languageCode":
+			out.Values[i] = ec._TranscriptionSection_languageCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var transcriptionWordImplementors = []string{"TranscriptionWord"}
+
+func (ec *executionContext) _TranscriptionWord(ctx context.Context, sel ast.SelectionSet, obj *model.TranscriptionWord) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transcriptionWordImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TranscriptionWord")
+		case "starttime":
+			out.Values[i] = ec._TranscriptionWord_starttime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "endtime":
+			out.Values[i] = ec._TranscriptionWord_endtime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "word":
+			out.Values[i] = ec._TranscriptionWord_word(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "confidence":
+			out.Values[i] = ec._TranscriptionWord_confidence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var userImplementors = []string{"User"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
@@ -2103,6 +2780,38 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "role":
 			out.Values[i] = ec._User_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var wordTimeImplementors = []string{"WordTime"}
+
+func (ec *executionContext) _WordTime(ctx context.Context, sel ast.SelectionSet, obj *model.WordTime) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, wordTimeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WordTime")
+		case "seconds":
+			out.Values[i] = ec._WordTime_seconds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nanos":
+			out.Values[i] = ec._WordTime_nanos(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2413,6 +3122,20 @@ func (ec *executionContext) marshalNClass2ᚕᚖgithubᚗcomᚋvikelabsᚋlecsha
 	return ret
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	return graphql.UnmarshalFloat(v)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloat(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	return graphql.UnmarshalInt(v)
 }
@@ -2439,6 +3162,94 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNTranscriptionParagraph2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionParagraph(ctx context.Context, sel ast.SelectionSet, v []*model.TranscriptionParagraph) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTranscriptionParagraph2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionParagraph(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNTranscriptionWord2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionWord(ctx context.Context, sel ast.SelectionSet, v []*model.TranscriptionWord) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTranscriptionWord2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionWord(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNWordTime2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐWordTime(ctx context.Context, sel ast.SelectionSet, v model.WordTime) graphql.Marshaler {
+	return ec._WordTime(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWordTime2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐWordTime(ctx context.Context, sel ast.SelectionSet, v *model.WordTime) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._WordTime(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -2773,6 +3584,79 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return ec.marshalOString2string(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOTranscriptionParagraph2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionParagraph(ctx context.Context, sel ast.SelectionSet, v model.TranscriptionParagraph) graphql.Marshaler {
+	return ec._TranscriptionParagraph(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTranscriptionParagraph2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionParagraph(ctx context.Context, sel ast.SelectionSet, v *model.TranscriptionParagraph) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TranscriptionParagraph(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTranscriptionSection2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionSection(ctx context.Context, sel ast.SelectionSet, v model.TranscriptionSection) graphql.Marshaler {
+	return ec._TranscriptionSection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTranscriptionSection2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionSection(ctx context.Context, sel ast.SelectionSet, v []*model.TranscriptionSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTranscriptionSection2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionSection(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOTranscriptionSection2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionSection(ctx context.Context, sel ast.SelectionSet, v *model.TranscriptionSection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TranscriptionSection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTranscriptionWord2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionWord(ctx context.Context, sel ast.SelectionSet, v model.TranscriptionWord) graphql.Marshaler {
+	return ec._TranscriptionWord(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTranscriptionWord2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionWord(ctx context.Context, sel ast.SelectionSet, v *model.TranscriptionWord) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TranscriptionWord(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUser2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
