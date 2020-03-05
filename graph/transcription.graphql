@@ -1,0 +1,26 @@
+type Transcription {
+    sections: [TranscriptionSection]
+}
+
+type TranscriptionSection {
+    alernatives: [TranscriptionParagraph]!
+    languageCode: String!
+}
+
+type TranscriptionParagraph {
+    transcript: String!
+    confidence: Float!
+    words: [TranscriptionWord]!
+}
+
+type TranscriptionWord {
+    starttime: WordTime!
+    endtime: WordTime!
+    word: String!
+    confidence: Float!
+}
+
+type WordTime {
+    seconds: String!
+    nanos: Int!
+}
