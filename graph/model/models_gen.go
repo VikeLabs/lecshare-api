@@ -10,9 +10,10 @@ type Class struct {
 }
 
 type Lecture struct {
-	Name     string `json:"name"`
-	Datetime string `json:"datetime"`
-	Duration int    `json:"duration"`
+	Name          string         `json:"name"`
+	Datetime      string         `json:"datetime"`
+	Duration      int            `json:"duration"`
+	Transcription *Transcription `json:"transcription"`
 }
 
 type Resource struct {
@@ -31,7 +32,7 @@ type TranscriptionParagraph struct {
 }
 
 type TranscriptionSection struct {
-	Alernatives  []*TranscriptionParagraph `json:"alernatives"`
+	Alternatives []*TranscriptionParagraph `json:"alternatives"`
 	LanguageCode string                    `json:"languageCode"`
 }
 
@@ -50,6 +51,6 @@ type User struct {
 }
 
 type WordTime struct {
-	Seconds string `json:"seconds"`
-	Nanos   int    `json:"nanos"`
+	Seconds *string `json:"seconds"`
+	Nanos   *int    `json:"nanos"`
 }

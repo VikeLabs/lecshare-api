@@ -4,6 +4,7 @@ schema {
 
 type Query {
     classes: [Class]!
+    transcriptions: Transcription!
 }
 
 type Class {
@@ -19,6 +20,7 @@ type Lecture {
     # transcription: Resource
     # audio: Resource
     duration: Int!
+    transcription: Transcription!
 }
 
 type Resource {

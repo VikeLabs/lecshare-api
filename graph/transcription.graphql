@@ -3,7 +3,7 @@ type Transcription {
 }
 
 type TranscriptionSection {
-    alernatives: [TranscriptionParagraph]!
+    alternatives: [TranscriptionParagraph]!
     languageCode: String!
 }
 
@@ -21,6 +21,6 @@ type TranscriptionWord {
 }
 
 type WordTime {
-    seconds: String!
-    nanos: Int!
+    seconds: String
+    nanos: Int
 }

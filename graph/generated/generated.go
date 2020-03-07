@@ -50,13 +50,15 @@ type ComplexityRoot struct {
 	}
 
 	Lecture struct {
-		Datetime func(childComplexity int) int
-		Duration func(childComplexity int) int
-		Name     func(childComplexity int) int
+		Datetime      func(childComplexity int) int
+		Duration      func(childComplexity int) int
+		Name          func(childComplexity int) int
+		Transcription func(childComplexity int) int
 	}
 
 	Query struct {
-		Classes func(childComplexity int) int
+		Classes        func(childComplexity int) int
+		Transcriptions func(childComplexity int) int
 	}
 
 	Resource struct {
@@ -75,7 +77,7 @@ type ComplexityRoot struct {
 	}
 
 	TranscriptionSection struct {
-		Alernatives  func(childComplexity int) int
+		Alternatives func(childComplexity int) int
 		LanguageCode func(childComplexity int) int
 	}
 
@@ -101,6 +103,7 @@ type ComplexityRoot struct {
 
 type QueryResolver interface {
 	Classes(ctx context.Context) ([]*model.Class, error)
+	Transcriptions(ctx context.Context) (*model.Transcription, error)
 }
 
 type executableSchema struct {
@@ -167,12 +170,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Lecture.Name(childComplexity), true
 
+	case "Lecture.transcription":
+		if e.complexity.Lecture.Transcription == nil {
+			break
+		}
+
+		return e.complexity.Lecture.Transcription(childComplexity), true
+
 	case "Query.classes":
 		if e.complexity.Query.Classes == nil {
 			break
 		}
 
 		return e.complexity.Query.Classes(childComplexity), true
+
+	case "Query.transcriptions":
+		if e.complexity.Query.Transcriptions == nil {
+			break
+		}
+
+		return e.complexity.Query.Transcriptions(childComplexity), true
 
 	case "Resource.contentType":
 		if e.complexity.Resource.ContentType == nil {
@@ -216,12 +233,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TranscriptionParagraph.Words(childComplexity), true
 
-	case "TranscriptionSection.alernatives":
-		if e.complexity.TranscriptionSection.Alernatives == nil {
+	case "TranscriptionSection.alternatives":
+		if e.complexity.TranscriptionSection.Alternatives == nil {
 			break
 		}
 
-		return e.complexity.TranscriptionSection.Alernatives(childComplexity), true
+		return e.complexity.TranscriptionSection.Alternatives(childComplexity), true
 
 	case "TranscriptionSection.languageCode":
 		if e.complexity.TranscriptionSection.LanguageCode == nil {
@@ -356,6 +373,7 @@ var sources = []*ast.Source{
 
 type Query {
     classes: [Class]!
+    transcriptions: Transcription!
 }
 
 type Class {
@@ -371,6 +389,7 @@ type Lecture {
     # transcription: Resource
     # audio: Resource
     duration: Int!
+    transcription: Transcription!
 }
 
 type Resource {
@@ -395,7 +414,7 @@ type User {
 }
 
 type TranscriptionSection {
-    alernatives: [TranscriptionParagraph]!
+    alternatives: [TranscriptionParagraph]!
     languageCode: String!
 }
 
@@ -413,8 +432,8 @@ type TranscriptionWord {
 }
 
 type WordTime {
-    seconds: String!
-    nanos: Int!
+    seconds: String
+    nanos: Int
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -705,6 +724,40 @@ func (ec *executionContext) _Lecture_duration(ctx context.Context, field graphql
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Lecture_transcription(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Lecture",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Transcription, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Transcription)
+	fc.Result = res
+	return ec.marshalNTranscription2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscription(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_classes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -737,6 +790,40 @@ func (ec *executionContext) _Query_classes(ctx context.Context, field graphql.Co
 	res := resTmp.([]*model.Class)
 	fc.Result = res
 	return ec.marshalNClass2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐClass(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_transcriptions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Transcriptions(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Transcription)
+	fc.Result = res
+	return ec.marshalNTranscription2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscription(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1003,7 +1090,7 @@ func (ec *executionContext) _TranscriptionParagraph_words(ctx context.Context, f
 	return ec.marshalNTranscriptionWord2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionWord(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _TranscriptionSection_alernatives(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionSection) (ret graphql.Marshaler) {
+func (ec *executionContext) _TranscriptionSection_alternatives(ctx context.Context, field graphql.CollectedField, obj *model.TranscriptionSection) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1020,7 +1107,7 @@ func (ec *executionContext) _TranscriptionSection_alernatives(ctx context.Contex
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Alernatives, nil
+		return obj.Alternatives, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1367,14 +1454,11 @@ func (ec *executionContext) _WordTime_seconds(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _WordTime_nanos(ctx context.Context, field graphql.CollectedField, obj *model.WordTime) (ret graphql.Marshaler) {
@@ -1401,14 +1485,11 @@ func (ec *executionContext) _WordTime_nanos(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2536,6 +2617,11 @@ func (ec *executionContext) _Lecture(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "transcription":
+			out.Values[i] = ec._Lecture_transcription(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2571,6 +2657,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_classes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "transcriptions":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_transcriptions(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2689,8 +2789,8 @@ func (ec *executionContext) _TranscriptionSection(ctx context.Context, sel ast.S
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TranscriptionSection")
-		case "alernatives":
-			out.Values[i] = ec._TranscriptionSection_alernatives(ctx, field, obj)
+		case "alternatives":
+			out.Values[i] = ec._TranscriptionSection_alternatives(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2807,14 +2907,8 @@ func (ec *executionContext) _WordTime(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = graphql.MarshalString("WordTime")
 		case "seconds":
 			out.Values[i] = ec._WordTime_seconds(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "nanos":
 			out.Values[i] = ec._WordTime_nanos(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3164,6 +3258,20 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNTranscription2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscription(ctx context.Context, sel ast.SelectionSet, v model.Transcription) graphql.Marshaler {
+	return ec._Transcription(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTranscription2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscription(ctx context.Context, sel ast.SelectionSet, v *model.Transcription) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Transcription(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNTranscriptionParagraph2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionParagraph(ctx context.Context, sel ast.SelectionSet, v []*model.TranscriptionParagraph) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -3510,6 +3618,29 @@ func (ec *executionContext) marshalOClass2ᚖgithubᚗcomᚋvikelabsᚋlecshare�
 		return graphql.Null
 	}
 	return ec._Class(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
+	return graphql.UnmarshalInt(v)
+}
+
+func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	return graphql.MarshalInt(v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOInt2int(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOInt2int(ctx, sel, *v)
 }
 
 func (ec *executionContext) marshalOLecture2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx context.Context, sel ast.SelectionSet, v model.Lecture) graphql.Marshaler {
