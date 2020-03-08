@@ -35,6 +35,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Lecture() LectureResolver
 	Query() QueryResolver
 }
 
@@ -57,8 +58,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Classes        func(childComplexity int) int
-		Transcriptions func(childComplexity int) int
+		Classes func(childComplexity int) int
 	}
 
 	Resource struct {
@@ -101,9 +101,11 @@ type ComplexityRoot struct {
 	}
 }
 
+type LectureResolver interface {
+	Transcription(ctx context.Context, obj *model.Lecture) (*model.Transcription, error)
+}
 type QueryResolver interface {
 	Classes(ctx context.Context) ([]*model.Class, error)
-	Transcriptions(ctx context.Context) (*model.Transcription, error)
 }
 
 type executableSchema struct {
@@ -183,13 +185,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Classes(childComplexity), true
-
-	case "Query.transcriptions":
-		if e.complexity.Query.Transcriptions == nil {
-			break
-		}
-
-		return e.complexity.Query.Transcriptions(childComplexity), true
 
 	case "Resource.contentType":
 		if e.complexity.Resource.ContentType == nil {
@@ -373,7 +368,6 @@ var sources = []*ast.Source{
 
 type Query {
     classes: [Class]!
-    transcriptions: Transcription!
 }
 
 type Class {
@@ -735,13 +729,13 @@ func (ec *executionContext) _Lecture_transcription(ctx context.Context, field gr
 		Object:   "Lecture",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Transcription, nil
+		return ec.resolvers.Lecture().Transcription(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -790,40 +784,6 @@ func (ec *executionContext) _Query_classes(ctx context.Context, field graphql.Co
 	res := resTmp.([]*model.Class)
 	fc.Result = res
 	return ec.marshalNClass2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐClass(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Query_transcriptions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Transcriptions(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Transcription)
-	fc.Result = res
-	return ec.marshalNTranscription2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscription(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2605,23 +2565,32 @@ func (ec *executionContext) _Lecture(ctx context.Context, sel ast.SelectionSet, 
 		case "name":
 			out.Values[i] = ec._Lecture_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "datetime":
 			out.Values[i] = ec._Lecture_datetime(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "duration":
 			out.Values[i] = ec._Lecture_duration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "transcription":
-			out.Values[i] = ec._Lecture_transcription(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Lecture_transcription(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2657,20 +2626,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_classes(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
-		case "transcriptions":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_transcriptions(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

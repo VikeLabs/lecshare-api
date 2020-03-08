@@ -9,9 +9,11 @@ import (
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
-func (r *queryResolver) Classes(ctx context.Context) ([]*model.Class, error) {
-	t, err := getTranscription("public/vikelabs_test1.json")
+func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture) (*model.Transcription, error) {
+	return getTranscription("public/vikelabs_test1.json")
+}
 
+func (r *queryResolver) Classes(ctx context.Context) ([]*model.Class, error) {
 	c := []*model.Class{
 		&model.Class{
 			Title: "Foundations of Programming II",
@@ -24,21 +26,18 @@ func (r *queryResolver) Classes(ctx context.Context) ([]*model.Class, error) {
 			},
 			Lectures: []*model.Lecture{
 				&model.Lecture{
-					Name:          "Introduction",
-					Datetime:      "Feb, 12, 2020",
-					Duration:      3600,
-					Transcription: t,
+					Name:     "Introduction",
+					Datetime: "Feb, 12, 2020",
+					Duration: 3600,
 				},
 			},
 		},
 	}
-	return c, err
+	return c, nil
 }
 
-func (r *queryResolver) Transcriptions(ctx context.Context) (*model.Transcription, error) {
-	return getTranscription("public/vikelabs_test1.json")
-}
+func (r *Resolver) Lecture() generated.LectureResolver { return &lectureResolver{r} }
+func (r *Resolver) Query() generated.QueryResolver     { return &queryResolver{r} }
 
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
+type lectureResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
