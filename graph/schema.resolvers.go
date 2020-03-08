@@ -14,6 +14,8 @@ import (
 )
 
 func (r *queryResolver) Classes(ctx context.Context) ([]*model.Class, error) {
+	t, err := getTranscription("public/vikelabs_test1.json")
+
 	c := []*model.Class{
 		&model.Class{
 			Title: "Foundations of Programming II",
@@ -26,18 +28,27 @@ func (r *queryResolver) Classes(ctx context.Context) ([]*model.Class, error) {
 			},
 			Lectures: []*model.Lecture{
 				&model.Lecture{
-					Name:     "Introduction",
-					Datetime: "Feb, 12, 2020",
-					Duration: 3600,
+					Name:          "Introduction",
+					Datetime:      "Feb, 12, 2020",
+					Duration:      3600,
+					Transcription: t,
 				},
 			},
 		},
 	}
-	return c, nil
+	return c, err
 }
 
 func (r *queryResolver) Transcriptions(ctx context.Context) (*model.Transcription, error) {
-	file, err := os.Open("public/vikelabs_test1.json")
+	return getTranscription("public/vikelabs_test1.json")
+}
+
+func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+
+type queryResolver struct{ *Resolver }
+
+func getTranscription(filename string) (*model.Transcription, error) {
+	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -54,7 +65,3 @@ func (r *queryResolver) Transcriptions(ctx context.Context) (*model.Transcriptio
 
 	return &transcription, nil
 }
-
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
-type queryResolver struct{ *Resolver }
