@@ -4,10 +4,6 @@ package graph
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
 
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
@@ -46,22 +42,3 @@ func (r *queryResolver) Transcriptions(ctx context.Context) (*model.Transcriptio
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type queryResolver struct{ *Resolver }
-
-func getTranscription(filename string) (*model.Transcription, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer file.Close()
-
-	bytes, _ := ioutil.ReadAll(file)
-
-	var transcription model.Transcription
-
-	err = json.Unmarshal(bytes, &transcription.Sections)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return &transcription, nil
-}
