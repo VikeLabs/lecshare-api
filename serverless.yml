@@ -42,5 +42,5 @@ package:
 #     createRoute53Record: true
 #     endpointType: 'regional'
 #     securityPolicy: tls_1_2
-plugins:
-  - serverless-offline
+# plugins:
+#   - serverless-offline
