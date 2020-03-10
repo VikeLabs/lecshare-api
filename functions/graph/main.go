@@ -14,6 +14,8 @@ import (
 var h *httpadapter.HandlerAdapter
 
 func lambdaHandler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// passes in the APIGatewayProxyRequest as a context.
+	// c, _ := core.GetAPIGatewayContextFromContext(ctx)
 	return h.ProxyWithContext(ctx, req)
 }
 
