@@ -3,12 +3,19 @@ schema {
 }
 
 type Query {
-    classes: [Class]!
+    schools(shortname: String): [School]!
+}
+
+type School {
+    name: String!
+    shortname: String!
+    classes(type: String): [Class]!
 }
 
 type Class {
     title: String! # Fundamentals of Programming II
     code: String! # ie CSC 115
+    crn: String! 
     instructor: User
     lectures: [Lecture]
 }
@@ -16,8 +23,7 @@ type Class {
 type Lecture {
     name: String!
     datetime: String!
-    # transcription: Resource
-    # audio: Resource
+    audio: String
     duration: Int!
     transcription: Transcription!
 }
@@ -27,14 +33,14 @@ type Resource {
     url: String
 }
 
-# enum Role {
-#     Instructor
-#     Student
-# }
+enum Role {
+    Instructor
+    Student
+}
 
 type User {
     firstName: String!
     lastName: String!
-    suffix: String!
+    prefix: String!
     role: String!
 }

@@ -54,6 +54,14 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  School:
+    fields:
+      classes:
+        resolver: true
+  Class:
+    fields:
+      lectures:
+        resolver: true
   Lecture:
     fields:
       transcription:

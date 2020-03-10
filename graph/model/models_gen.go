@@ -2,9 +2,16 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Class struct {
 	Title      string     `json:"title"`
 	Code       string     `json:"code"`
+	Crn        string     `json:"crn"`
 	Instructor *User      `json:"instructor"`
 	Lectures   []*Lecture `json:"lectures"`
 }
@@ -12,6 +19,7 @@ type Class struct {
 type Lecture struct {
 	Name          string         `json:"name"`
 	Datetime      string         `json:"datetime"`
+	Audio         *string        `json:"audio"`
 	Duration      int            `json:"duration"`
 	Transcription *Transcription `json:"transcription"`
 }
@@ -19,6 +27,12 @@ type Lecture struct {
 type Resource struct {
 	ContentType *string `json:"contentType"`
 	URL         *string `json:"url"`
+}
+
+type School struct {
+	Name      string   `json:"name"`
+	Shortname string   `json:"shortname"`
+	Classes   []*Class `json:"classes"`
 }
 
 type Transcription struct {
@@ -46,11 +60,52 @@ type TranscriptionWord struct {
 type User struct {
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
-	Suffix    string `json:"suffix"`
+	Prefix    string `json:"prefix"`
 	Role      string `json:"role"`
 }
 
 type WordTime struct {
 	Seconds *string `json:"seconds"`
 	Nanos   *int    `json:"nanos"`
+}
+
+type Role string
+
+const (
+	RoleInstructor Role = "Instructor"
+	RoleStudent    Role = "Student"
+)
+
+var AllRole = []Role{
+	RoleInstructor,
+	RoleStudent,
+}
+
+func (e Role) IsValid() bool {
+	switch e {
+	case RoleInstructor, RoleStudent:
+		return true
+	}
+	return false
+}
+
+func (e Role) String() string {
+	return string(e)
+}
+
+func (e *Role) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Role(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Role", str)
+	}
+	return nil
+}
+
+func (e Role) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
