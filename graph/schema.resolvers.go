@@ -6,9 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
@@ -29,17 +31,25 @@ func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*mode
 }
 
 func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture) (*model.Transcription, error) {
-	file, err := os.Open("public/vikelabs_test1.json")
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer file.Close()
+	buff := &aws.WriteAtBuffer{}
 
-	bytes, _ := ioutil.ReadAll(file)
+	sess, _ := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2"),
+	})
+	const transcriptionFile = "vikelabs_test1.json"
+
+	downloader := s3manager.NewDownloader(sess)
+	_, err := downloader.Download(buff,
+		&s3.GetObjectInput{
+			Bucket: aws.String("assets-lecshare.oimo.ca"),
+			Key:    aws.String(transcriptionFile),
+		})
+
+	// fmt.Println("Downloaded", transcriptionFile, numBytes, "bytes")
 
 	var transcription model.Transcription
 
-	err = json.Unmarshal(bytes, &transcription.Sections)
+	err = json.Unmarshal(buff.Bytes(), &transcription.Sections)
 	if err != nil {
 		fmt.Println(err)
 	}
