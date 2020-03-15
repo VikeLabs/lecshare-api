@@ -2,37 +2,27 @@
 
 package model
 
-import (
-	"fmt"
-	"io"
-	"strconv"
-)
-
 type Class struct {
-	Title      string     `json:"title"`
-	Code       string     `json:"code"`
-	Crn        string     `json:"crn"`
-	Instructor *User      `json:"instructor"`
-	Lectures   []*Lecture `json:"lectures"`
+	Title       string        `json:"title"`
+	Subject     string        `json:"subject"`
+	Code        string        `json:"code"`
+	Term        string        `json:"term"`
+	Instructors []*Instructor `json:"instructors"`
+	Lectures    []*Lecture    `json:"lectures"`
 }
 
-type Lecture struct {
-	Name          string         `json:"name"`
-	Datetime      string         `json:"datetime"`
-	Audio         *string        `json:"audio"`
-	Duration      int            `json:"duration"`
-	Transcription *Transcription `json:"transcription"`
-}
-
-type Resource struct {
-	ContentType *string `json:"contentType"`
-	URL         *string `json:"url"`
+type Instructor struct {
+	Title      *string `json:"title"`
+	FirstName  string  `json:"firstName"`
+	MiddleName *string `json:"middleName"`
+	LastName   string  `json:"lastName"`
 }
 
 type School struct {
-	Name      string   `json:"name"`
-	Shortname string   `json:"shortname"`
-	Classes   []*Class `json:"classes"`
+	Name     string   `json:"name"`
+	Code     string   `json:"code"`
+	Homepage *string  `json:"homepage"`
+	Classes  []*Class `json:"classes"`
 }
 
 type Transcription struct {
@@ -57,55 +47,7 @@ type TranscriptionWord struct {
 	Confidence float64   `json:"confidence"`
 }
 
-type User struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Prefix    string `json:"prefix"`
-	Role      string `json:"role"`
-}
-
 type WordTime struct {
 	Seconds *string `json:"seconds"`
 	Nanos   *int    `json:"nanos"`
-}
-
-type Role string
-
-const (
-	RoleInstructor Role = "Instructor"
-	RoleStudent    Role = "Student"
-)
-
-var AllRole = []Role{
-	RoleInstructor,
-	RoleStudent,
-}
-
-func (e Role) IsValid() bool {
-	switch e {
-	case RoleInstructor, RoleStudent:
-		return true
-	}
-	return false
-}
-
-func (e Role) String() string {
-	return string(e)
-}
-
-func (e *Role) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Role(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Role", str)
-	}
-	return nil
-}
-
-func (e Role) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }

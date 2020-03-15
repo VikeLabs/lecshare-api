@@ -46,34 +46,39 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Class struct {
-		Code       func(childComplexity int) int
-		Crn        func(childComplexity int) int
-		Instructor func(childComplexity int) int
-		Lectures   func(childComplexity int) int
+		Code        func(childComplexity int) int
+		Instructors func(childComplexity int) int
+		Lectures    func(childComplexity int) int
+		Subject     func(childComplexity int) int
+		Term        func(childComplexity int) int
+		Title       func(childComplexity int) int
+	}
+
+	Instructor struct {
+		FirstName  func(childComplexity int) int
+		LastName   func(childComplexity int) int
+		MiddleName func(childComplexity int) int
 		Title      func(childComplexity int) int
 	}
 
 	Lecture struct {
 		Audio         func(childComplexity int) int
 		Datetime      func(childComplexity int) int
+		Description   func(childComplexity int) int
 		Duration      func(childComplexity int) int
-		Name          func(childComplexity int) int
+		Title         func(childComplexity int) int
 		Transcription func(childComplexity int) int
 	}
 
 	Query struct {
-		Schools func(childComplexity int, shortname *string) int
-	}
-
-	Resource struct {
-		ContentType func(childComplexity int) int
-		URL         func(childComplexity int) int
+		Schools func(childComplexity int, code *string) int
 	}
 
 	School struct {
-		Classes   func(childComplexity int, typeArg *string) int
-		Name      func(childComplexity int) int
-		Shortname func(childComplexity int) int
+		Classes  func(childComplexity int) int
+		Code     func(childComplexity int) int
+		Homepage func(childComplexity int) int
+		Name     func(childComplexity int) int
 	}
 
 	Transcription struct {
@@ -98,13 +103,6 @@ type ComplexityRoot struct {
 		Word       func(childComplexity int) int
 	}
 
-	User struct {
-		FirstName func(childComplexity int) int
-		LastName  func(childComplexity int) int
-		Prefix    func(childComplexity int) int
-		Role      func(childComplexity int) int
-	}
-
 	WordTime struct {
 		Nanos   func(childComplexity int) int
 		Seconds func(childComplexity int) int
@@ -118,10 +116,10 @@ type LectureResolver interface {
 	Transcription(ctx context.Context, obj *model.Lecture) (*model.Transcription, error)
 }
 type QueryResolver interface {
-	Schools(ctx context.Context, shortname *string) ([]*model.School, error)
+	Schools(ctx context.Context, code *string) ([]*model.School, error)
 }
 type SchoolResolver interface {
-	Classes(ctx context.Context, obj *model.School, typeArg *string) ([]*model.Class, error)
+	Classes(ctx context.Context, obj *model.School) ([]*model.Class, error)
 }
 
 type executableSchema struct {
@@ -146,19 +144,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Class.Code(childComplexity), true
 
-	case "Class.crn":
-		if e.complexity.Class.Crn == nil {
+	case "Class.instructors":
+		if e.complexity.Class.Instructors == nil {
 			break
 		}
 
-		return e.complexity.Class.Crn(childComplexity), true
-
-	case "Class.instructor":
-		if e.complexity.Class.Instructor == nil {
-			break
-		}
-
-		return e.complexity.Class.Instructor(childComplexity), true
+		return e.complexity.Class.Instructors(childComplexity), true
 
 	case "Class.lectures":
 		if e.complexity.Class.Lectures == nil {
@@ -167,12 +158,54 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Class.Lectures(childComplexity), true
 
+	case "Class.subject":
+		if e.complexity.Class.Subject == nil {
+			break
+		}
+
+		return e.complexity.Class.Subject(childComplexity), true
+
+	case "Class.term":
+		if e.complexity.Class.Term == nil {
+			break
+		}
+
+		return e.complexity.Class.Term(childComplexity), true
+
 	case "Class.title":
 		if e.complexity.Class.Title == nil {
 			break
 		}
 
 		return e.complexity.Class.Title(childComplexity), true
+
+	case "Instructor.firstName":
+		if e.complexity.Instructor.FirstName == nil {
+			break
+		}
+
+		return e.complexity.Instructor.FirstName(childComplexity), true
+
+	case "Instructor.lastName":
+		if e.complexity.Instructor.LastName == nil {
+			break
+		}
+
+		return e.complexity.Instructor.LastName(childComplexity), true
+
+	case "Instructor.middleName":
+		if e.complexity.Instructor.MiddleName == nil {
+			break
+		}
+
+		return e.complexity.Instructor.MiddleName(childComplexity), true
+
+	case "Instructor.title":
+		if e.complexity.Instructor.Title == nil {
+			break
+		}
+
+		return e.complexity.Instructor.Title(childComplexity), true
 
 	case "Lecture.audio":
 		if e.complexity.Lecture.Audio == nil {
@@ -188,6 +221,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Lecture.Datetime(childComplexity), true
 
+	case "Lecture.description":
+		if e.complexity.Lecture.Description == nil {
+			break
+		}
+
+		return e.complexity.Lecture.Description(childComplexity), true
+
 	case "Lecture.duration":
 		if e.complexity.Lecture.Duration == nil {
 			break
@@ -195,12 +235,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Lecture.Duration(childComplexity), true
 
-	case "Lecture.name":
-		if e.complexity.Lecture.Name == nil {
+	case "Lecture.title":
+		if e.complexity.Lecture.Title == nil {
 			break
 		}
 
-		return e.complexity.Lecture.Name(childComplexity), true
+		return e.complexity.Lecture.Title(childComplexity), true
 
 	case "Lecture.transcription":
 		if e.complexity.Lecture.Transcription == nil {
@@ -219,33 +259,28 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Schools(childComplexity, args["shortname"].(*string)), true
-
-	case "Resource.contentType":
-		if e.complexity.Resource.ContentType == nil {
-			break
-		}
-
-		return e.complexity.Resource.ContentType(childComplexity), true
-
-	case "Resource.url":
-		if e.complexity.Resource.URL == nil {
-			break
-		}
-
-		return e.complexity.Resource.URL(childComplexity), true
+		return e.complexity.Query.Schools(childComplexity, args["code"].(*string)), true
 
 	case "School.classes":
 		if e.complexity.School.Classes == nil {
 			break
 		}
 
-		args, err := ec.field_School_classes_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
+		return e.complexity.School.Classes(childComplexity), true
+
+	case "School.code":
+		if e.complexity.School.Code == nil {
+			break
 		}
 
-		return e.complexity.School.Classes(childComplexity, args["type"].(*string)), true
+		return e.complexity.School.Code(childComplexity), true
+
+	case "School.homepage":
+		if e.complexity.School.Homepage == nil {
+			break
+		}
+
+		return e.complexity.School.Homepage(childComplexity), true
 
 	case "School.name":
 		if e.complexity.School.Name == nil {
@@ -253,13 +288,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.School.Name(childComplexity), true
-
-	case "School.shortname":
-		if e.complexity.School.Shortname == nil {
-			break
-		}
-
-		return e.complexity.School.Shortname(childComplexity), true
 
 	case "Transcription.sections":
 		if e.complexity.Transcription.Sections == nil {
@@ -331,34 +359,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TranscriptionWord.Word(childComplexity), true
 
-	case "User.firstName":
-		if e.complexity.User.FirstName == nil {
-			break
-		}
-
-		return e.complexity.User.FirstName(childComplexity), true
-
-	case "User.lastName":
-		if e.complexity.User.LastName == nil {
-			break
-		}
-
-		return e.complexity.User.LastName(childComplexity), true
-
-	case "User.prefix":
-		if e.complexity.User.Prefix == nil {
-			break
-		}
-
-		return e.complexity.User.Prefix(childComplexity), true
-
-	case "User.role":
-		if e.complexity.User.Role == nil {
-			break
-		}
-
-		return e.complexity.User.Role(childComplexity), true
-
 	case "WordTime.nanos":
 		if e.complexity.WordTime.Nanos == nil {
 			break
@@ -428,48 +428,40 @@ var sources = []*ast.Source{
 }
 
 type Query {
-    schools(shortname: String): [School]!
+    schools(code: String): [School]!
 }
 
 type School {
     name: String!
-    shortname: String!
-    classes(type: String): [Class]!
+    code: String!
+    homepage: String
+    classes: [Class]!
 }
 
 type Class {
     title: String! # Fundamentals of Programming II
-    code: String! # ie CSC 115
-    crn: String! 
-    instructor: User
+    subject: String!
+    code: String!
+    term: String!
+    instructors: [Instructor]! 
     lectures: [Lecture]
 }
 
 type Lecture {
-    name: String!
-    datetime: String!
+    title: String
+    description: String
+    datetime: String
     audio: String
     duration: Int!
     transcription: Transcription!
 }
 
-type Resource {
-    contentType: String
-    url: String
-}
-
-enum Role {
-    Instructor
-    Student
-}
-
-type User {
+type Instructor {
+    title: String
     firstName: String!
+    middleName: String
     lastName: String!
-    prefix: String!
-    role: String!
-}
-`, BuiltIn: false},
+}`, BuiltIn: false},
 	&ast.Source{Name: "graph/transcription.graphql", Input: `type Transcription {
     sections: [TranscriptionSection]
 }
@@ -521,27 +513,13 @@ func (ec *executionContext) field_Query_schools_args(ctx context.Context, rawArg
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *string
-	if tmp, ok := rawArgs["shortname"]; ok {
+	if tmp, ok := rawArgs["code"]; ok {
 		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["shortname"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_School_classes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["type"]; ok {
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["type"] = arg0
+	args["code"] = arg0
 	return args, nil
 }
 
@@ -615,6 +593,40 @@ func (ec *executionContext) _Class_title(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Class_subject(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Class",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Subject, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Class_code(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -649,7 +661,7 @@ func (ec *executionContext) _Class_code(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Class_crn(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
+func (ec *executionContext) _Class_term(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -666,7 +678,7 @@ func (ec *executionContext) _Class_crn(ctx context.Context, field graphql.Collec
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Crn, nil
+		return obj.Term, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -683,7 +695,7 @@ func (ec *executionContext) _Class_crn(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Class_instructor(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
+func (ec *executionContext) _Class_instructors(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -700,18 +712,21 @@ func (ec *executionContext) _Class_instructor(ctx context.Context, field graphql
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Instructor, nil
+		return obj.Instructors, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.([]*model.Instructor)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNInstructor2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐInstructor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Class_lectures(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
@@ -745,7 +760,137 @@ func (ec *executionContext) _Class_lectures(ctx context.Context, field graphql.C
 	return ec.marshalOLecture2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Lecture_name(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
+func (ec *executionContext) _Instructor_title(ctx context.Context, field graphql.CollectedField, obj *model.Instructor) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Instructor",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Instructor_firstName(ctx context.Context, field graphql.CollectedField, obj *model.Instructor) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Instructor",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FirstName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Instructor_middleName(ctx context.Context, field graphql.CollectedField, obj *model.Instructor) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Instructor",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MiddleName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Instructor_lastName(ctx context.Context, field graphql.CollectedField, obj *model.Instructor) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Instructor",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Lecture_title(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -762,21 +907,49 @@ func (ec *executionContext) _Lecture_name(ctx context.Context, field graphql.Col
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.Title, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Lecture_description(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Lecture",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Lecture_datetime(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
@@ -803,14 +976,11 @@ func (ec *executionContext) _Lecture_datetime(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Lecture_audio(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
@@ -936,7 +1106,7 @@ func (ec *executionContext) _Query_schools(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Schools(rctx, args["shortname"].(*string))
+		return ec.resolvers.Query().Schools(rctx, args["code"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1022,68 +1192,6 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Resource_contentType(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Resource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContentType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Resource_url(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Resource",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.URL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _School_name(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1118,7 +1226,7 @@ func (ec *executionContext) _School_name(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _School_shortname(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
+func (ec *executionContext) _School_code(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1135,7 +1243,7 @@ func (ec *executionContext) _School_shortname(ctx context.Context, field graphql
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Shortname, nil
+		return obj.Code, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1150,6 +1258,37 @@ func (ec *executionContext) _School_shortname(ctx context.Context, field graphql
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _School_homepage(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "School",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Homepage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _School_classes(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
@@ -1167,16 +1306,9 @@ func (ec *executionContext) _School_classes(ctx context.Context, field graphql.C
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_School_classes_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.School().Classes(rctx, obj, args["type"].(*string))
+		return ec.resolvers.School().Classes(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1528,142 +1660,6 @@ func (ec *executionContext) _TranscriptionWord_confidence(ctx context.Context, f
 	res := resTmp.(float64)
 	fc.Result = res
 	return ec.marshalNFloat2float64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_firstName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FirstName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_lastName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LastName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_prefix(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Prefix, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_role(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Role, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _WordTime_seconds(ctx context.Context, field graphql.CollectedField, obj *model.WordTime) (ret graphql.Marshaler) {
@@ -2807,18 +2803,26 @@ func (ec *executionContext) _Class(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "subject":
+			out.Values[i] = ec._Class_subject(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "code":
 			out.Values[i] = ec._Class_code(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "crn":
-			out.Values[i] = ec._Class_crn(ctx, field, obj)
+		case "term":
+			out.Values[i] = ec._Class_term(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "instructor":
-			out.Values[i] = ec._Class_instructor(ctx, field, obj)
+		case "instructors":
+			out.Values[i] = ec._Class_instructors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "lectures":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -2841,6 +2845,42 @@ func (ec *executionContext) _Class(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var instructorImplementors = []string{"Instructor"}
+
+func (ec *executionContext) _Instructor(ctx context.Context, sel ast.SelectionSet, obj *model.Instructor) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, instructorImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Instructor")
+		case "title":
+			out.Values[i] = ec._Instructor_title(ctx, field, obj)
+		case "firstName":
+			out.Values[i] = ec._Instructor_firstName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "middleName":
+			out.Values[i] = ec._Instructor_middleName(ctx, field, obj)
+		case "lastName":
+			out.Values[i] = ec._Instructor_lastName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var lectureImplementors = []string{"Lecture"}
 
 func (ec *executionContext) _Lecture(ctx context.Context, sel ast.SelectionSet, obj *model.Lecture) graphql.Marshaler {
@@ -2852,16 +2892,12 @@ func (ec *executionContext) _Lecture(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Lecture")
-		case "name":
-			out.Values[i] = ec._Lecture_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
+		case "title":
+			out.Values[i] = ec._Lecture_title(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._Lecture_description(ctx, field, obj)
 		case "datetime":
 			out.Values[i] = ec._Lecture_datetime(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "audio":
 			out.Values[i] = ec._Lecture_audio(ctx, field, obj)
 		case "duration":
@@ -2938,32 +2974,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var resourceImplementors = []string{"Resource"}
-
-func (ec *executionContext) _Resource(ctx context.Context, sel ast.SelectionSet, obj *model.Resource) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, resourceImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Resource")
-		case "contentType":
-			out.Values[i] = ec._Resource_contentType(ctx, field, obj)
-		case "url":
-			out.Values[i] = ec._Resource_url(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var schoolImplementors = []string{"School"}
 
 func (ec *executionContext) _School(ctx context.Context, sel ast.SelectionSet, obj *model.School) graphql.Marshaler {
@@ -2980,11 +2990,13 @@ func (ec *executionContext) _School(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "shortname":
-			out.Values[i] = ec._School_shortname(ctx, field, obj)
+		case "code":
+			out.Values[i] = ec._School_code(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "homepage":
+			out.Values[i] = ec._School_homepage(ctx, field, obj)
 		case "classes":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -3131,48 +3143,6 @@ func (ec *executionContext) _TranscriptionWord(ctx context.Context, sel ast.Sele
 			}
 		case "confidence":
 			out.Values[i] = ec._TranscriptionWord_confidence(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var userImplementors = []string{"User"}
-
-func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("User")
-		case "firstName":
-			out.Values[i] = ec._User_firstName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "lastName":
-			out.Values[i] = ec._User_lastName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "prefix":
-			out.Values[i] = ec._User_prefix(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "role":
-			out.Values[i] = ec._User_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3521,6 +3491,43 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNInstructor2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐInstructor(ctx context.Context, sel ast.SelectionSet, v []*model.Instructor) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOInstructor2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐInstructor(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
@@ -3950,6 +3957,17 @@ func (ec *executionContext) marshalOClass2ᚖgithubᚗcomᚋvikelabsᚋlecshare�
 	return ec._Class(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOInstructor2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐInstructor(ctx context.Context, sel ast.SelectionSet, v model.Instructor) graphql.Marshaler {
+	return ec._Instructor(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOInstructor2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐInstructor(ctx context.Context, sel ast.SelectionSet, v *model.Instructor) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Instructor(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
 	return graphql.UnmarshalInt(v)
 }
@@ -4129,17 +4147,6 @@ func (ec *executionContext) marshalOTranscriptionWord2ᚖgithubᚗcomᚋvikelabs
 		return graphql.Null
 	}
 	return ec._TranscriptionWord(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUser2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
-	return ec._User(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
