@@ -14,9 +14,11 @@ functions:
       - http:
           path: /
           method: get
+          cors: true
       - http:
           path: /
           method: post
+          cors: true
   graphql:
     description: GraphQL Endpoint
     handler: bin/graph
@@ -24,9 +26,11 @@ functions:
       - http:
           path: /query
           method: get
+          cors: true
       - http:
           path: /query
           method: post
+          cors: true
 package:
   # configuration of the files required in this service.
   exclude:
@@ -42,5 +46,3 @@ package:
 #     createRoute53Record: true
 #     endpointType: 'regional'
 #     securityPolicy: tls_1_2
-# plugins:
-#   - serverless-offline

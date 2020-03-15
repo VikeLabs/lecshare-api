@@ -15,7 +15,7 @@ func Middleware(next http.Handler) http.Handler {
 }
 
 // CorsMiddleware is a help function get around CORS
-// TODO do this better
+// TODO do this better with authentication
 func CorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
