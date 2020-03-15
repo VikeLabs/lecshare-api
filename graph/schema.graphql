@@ -3,44 +3,37 @@ schema {
 }
 
 type Query {
-    schools(shortname: String): [School]!
+    schools(code: String): [School]!
 }
 
 type School {
     name: String!
-    shortname: String!
-    classes(type: String): [Class]!
+    code: String!
+    homepage: String
+    classes: [Class]!
 }
 
 type Class {
     title: String! # Fundamentals of Programming II
-    code: String! # ie CSC 115
-    crn: String! 
-    instructor: User
+    subject: String!
+    code: String!
+    term: String!
+    instructors: [Instructor]! 
     lectures: [Lecture]
 }
 
 type Lecture {
-    name: String!
-    datetime: String!
+    title: String
+    description: String
+    datetime: String
     audio: String
     duration: Int!
     transcription: Transcription!
 }
 
-type Resource {
-    contentType: String
-    url: String
-}
-
-enum Role {
-    Instructor
-    Student
-}
-
-type User {
+type Instructor {
+    title: String
     firstName: String!
+    middleName: String
     lastName: String!
-    prefix: String!
-    role: String!
 }
