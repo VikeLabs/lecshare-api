@@ -12,12 +12,18 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
+
+/* Environment variables are required for AWS auth:
+export AWS_ACCESS_KEY=EXAMPLE123
+export AWS_SECRET_KEY=EXAMPLE123/123121
+*/
 
 func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
 	return obj.Lectures, nil
@@ -28,7 +34,8 @@ func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture)
 	buff := &aws.WriteAtBuffer{}
 
 	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region:      aws.String("us-west-2"),
+		Credentials: credentials.NewEnvCredentials(),
 	})
 
 	fmt.Println(*obj.Transcription)
@@ -39,6 +46,11 @@ func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture)
 			Bucket: aws.String("assets-lecshare.oimo.ca"),
 			Key:    aws.String(*transcriptionFile),
 		})
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
 
 	fmt.Println("Downloaded", *transcriptionFile, numBytes, "bytes")
 
@@ -94,6 +106,19 @@ func (r *schoolResolver) Classes(ctx context.Context, obj *model.School) ([]*mod
 	json.Unmarshal(byteValue, &classes)
 
 	fmt.Println(obj.Code)
+
+	// Swap all audio for the Vikelabs one
+	for i := range classes {
+		for _, c := range classes[i] {
+			for _, L := range c.Lectures {
+				*L.Audio, err = GetResource("vikelabs/vikelabs_test1.ogg", 15)
+				if err != nil {
+					println(err)
+					return nil, err
+				}
+			}
+		}
+	}
 
 	c := classes[strings.ToLower(obj.Code)]
 	if c != nil {
