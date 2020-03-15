@@ -1,0 +1,27 @@
+[
+    {
+        "name": "University of Victoria",
+        "code": "UVIC",
+        "homepage": "https://uvic.ca/"
+    },
+    {
+        "name": "Vancouver Island University",
+        "code": "VIU",
+        "homepage": "https://viu.ca/"
+    },
+    {
+        "name": "VikeLabs",
+        "code": "VIKELABS",
+        "homepage": "https://www.github.com/vikelabs/"
+    },
+    {
+        "name": "Camosun College",
+        "code": "CAMOSUN",
+        "homepage": "http://camosun.ca/"
+    },
+    {
+        "name": "Royal Roads University",
+        "code": "RYLRD",
+        "homepage": "https://www.royalroads.ca/"
+    }
+]

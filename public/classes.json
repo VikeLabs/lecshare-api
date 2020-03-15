@@ -1,0 +1,51 @@
+{
+    "uvic": [
+        {
+            "title": "Introduction to Principles of Microeconomics and Financial Project Evaluation",
+            "subject": "ECON",
+            "code": "180",
+            "term": "092018",
+            "protected": true,
+            "instructors": [
+                {
+                    "firstName": "Christopher",
+                    "lastName": "Willmore"
+                }
+            ],
+            "lectures": [
+                {
+                    "title": "Lecture 31",
+                    "description": "A sample audio recording provided by professor Christopher Willmore.",
+                    "transcription": "uvic/092018/econ/180/L31.json",
+                    "audio": "s3://lecshare-assets.oimo.ca/uvic/092018/econ/180/audio.json",
+                    "video": "",
+                    "duration": 2935
+                }
+            ]
+        }
+    ],
+    "vikelabs": [
+        {
+            "title": "VikeLabs Meetings",
+            "subject": "VL",
+            "code": "101",
+            "term": "092019",
+            "instructors": [
+                {
+                    "firstName": "Braiden",
+                    "lastName": "Cutforth"
+                }
+            ],
+            "lectures": [
+                {
+                    "title": "First Meeting of the Semester!",
+                    "description": "A sample audio recording/transcription of Braiden Cutforth presenting VikeLabs.",
+                    "transcription": "vikelabs_test1.json",
+                    "audio": "s3://lecshare-assets.oimo.ca/vikelabs/092019/vl/001/audio.ogg",
+                    "video": "",
+                    "duration": 390
+                }
+            ]
+        }
+    ]
+}
