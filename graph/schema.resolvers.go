@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -34,8 +33,7 @@ func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture)
 	buff := &aws.WriteAtBuffer{}
 
 	sess, _ := session.NewSession(&aws.Config{
-		Region:      aws.String("us-west-2"),
-		Credentials: credentials.NewEnvCredentials(),
+		Region: aws.String("us-west-2"),
 	})
 
 	fmt.Println(*obj.Transcription)
