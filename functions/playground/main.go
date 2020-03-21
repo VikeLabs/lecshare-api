@@ -19,7 +19,7 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 func main() {
 	// create a GraphQL handler and pass it to httpadapter.
-	h = httpadapter.New(playground.Handler("GraphQL playground", "/dev/query"))
+	h = httpadapter.New(playground.Handler("GraphQL playground", "/lecshare/query"))
 	// start the lambda.
 	lambda.Start(handler)
 }
