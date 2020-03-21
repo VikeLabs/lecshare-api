@@ -3,6 +3,16 @@ custom:
   # try to use the argument, then the provider stage
   stage: ${opt:stage, self:provider.stage}
   tableName: lecshare-api-${self:custom.stage}
+  customDomain:
+    # TODO change over to vikelabs.ca
+    domainName: dev.oimo.ca
+    basePath: lecshare
+    stage: ${self:custom.stage}
+    # TODO change over to api.oimo.ca (or api.vikelabs.ca)
+    certificateName: 'dev.oimo.ca'
+    endpointType: regional
+    securityPolicy: tls_1_2
+    createRoute53Record: false
 provider:
   name: aws
   region: us-west-2 # oregon
@@ -57,14 +67,14 @@ resources:
       Properties:
         TableName: ${self:custom.tableName}
         AttributeDefinitions:
-          - AttributeName: pk
+          - AttributeName: PK
             AttributeType: S
-          - AttributeName: sk
+          - AttributeName: SK
             AttributeType: S
         KeySchema:
-          - AttributeName: pk
+          - AttributeName: PK
             KeyType: HASH
-          - AttributeName: sk
+          - AttributeName: SK
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
 package:
@@ -73,3 +83,5 @@ package:
     - ./**
   include:
     - ./bin/**
+plugins:
+  - serverless-domain-manager
