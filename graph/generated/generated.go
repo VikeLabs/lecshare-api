@@ -37,6 +37,7 @@ type Config struct {
 type ResolverRoot interface {
 	Class() ClassResolver
 	Lecture() LectureResolver
+	Mutation() MutationResolver
 	Query() QueryResolver
 	School() SchoolResolver
 }
@@ -70,15 +71,22 @@ type ComplexityRoot struct {
 		Transcription func(childComplexity int) int
 	}
 
+	Mutation struct {
+		CreateSchool func(childComplexity int, input model.NewSchool) int
+	}
+
 	Query struct {
 		Schools func(childComplexity int, code *string) int
 	}
 
 	School struct {
-		Classes  func(childComplexity int) int
-		Code     func(childComplexity int) int
-		Homepage func(childComplexity int) int
-		Name     func(childComplexity int) int
+		Classes      func(childComplexity int) int
+		Code         func(childComplexity int) int
+		DateCreated  func(childComplexity int) int
+		DateModified func(childComplexity int) int
+		Description  func(childComplexity int) int
+		Homepage     func(childComplexity int) int
+		Name         func(childComplexity int) int
 	}
 
 	Transcription struct {
@@ -115,11 +123,16 @@ type ClassResolver interface {
 type LectureResolver interface {
 	Transcription(ctx context.Context, obj *model.Lecture) (*model.Transcription, error)
 }
+type MutationResolver interface {
+	CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error)
+}
 type QueryResolver interface {
 	Schools(ctx context.Context, code *string) ([]*model.School, error)
 }
 type SchoolResolver interface {
 	Classes(ctx context.Context, obj *model.School) ([]*model.Class, error)
+	DateCreated(ctx context.Context, obj *model.School) (string, error)
+	DateModified(ctx context.Context, obj *model.School) (string, error)
 }
 
 type executableSchema struct {
@@ -249,6 +262,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Lecture.Transcription(childComplexity), true
 
+	case "Mutation.createSchool":
+		if e.complexity.Mutation.CreateSchool == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createSchool_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateSchool(childComplexity, args["input"].(model.NewSchool)), true
+
 	case "Query.schools":
 		if e.complexity.Query.Schools == nil {
 			break
@@ -274,6 +299,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.School.Code(childComplexity), true
+
+	case "School.dateCreated":
+		if e.complexity.School.DateCreated == nil {
+			break
+		}
+
+		return e.complexity.School.DateCreated(childComplexity), true
+
+	case "School.dateModified":
+		if e.complexity.School.DateModified == nil {
+			break
+		}
+
+		return e.complexity.School.DateModified(childComplexity), true
+
+	case "School.description":
+		if e.complexity.School.Description == nil {
+			break
+		}
+
+		return e.complexity.School.Description(childComplexity), true
 
 	case "School.homepage":
 		if e.complexity.School.Homepage == nil {
@@ -397,6 +443,20 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -431,11 +491,26 @@ type Query {
     schools(code: String): [School]!
 }
 
+type Mutation {
+    createSchool(input: NewSchool!): School!
+    # updateSchool(input: UpdateSchool!): School!
+}
+
+input NewSchool {
+    name: String!
+    code: String!
+    description: String
+    homepage: String
+}
+
 type School {
     name: String!
     code: String!
+    description: String
     homepage: String
     classes: [Class]!
+    dateCreated: String!
+    dateModified: String!
 }
 
 type Class {
@@ -494,6 +569,20 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createSchool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewSchool
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNNewSchool2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐNewSchool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1082,6 +1171,47 @@ func (ec *executionContext) _Lecture_transcription(ctx context.Context, field gr
 	return ec.marshalNTranscription2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscription(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_createSchool(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createSchool_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateSchool(rctx, args["input"].(model.NewSchool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.School)
+	fc.Result = res
+	return ec.marshalNSchool2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐSchool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_schools(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1260,6 +1390,37 @@ func (ec *executionContext) _School_code(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _School_description(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "School",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _School_homepage(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1323,6 +1484,74 @@ func (ec *executionContext) _School_classes(ctx context.Context, field graphql.C
 	res := resTmp.([]*model.Class)
 	fc.Result = res
 	return ec.marshalNClass2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐClass(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _School_dateCreated(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "School",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.School().DateCreated(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _School_dateModified(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "School",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.School().DateModified(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Transcription_sections(ctx context.Context, field graphql.CollectedField, obj *model.Transcription) (ret graphql.Marshaler) {
@@ -2779,6 +3008,42 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputNewSchool(ctx context.Context, obj interface{}) (model.NewSchool, error) {
+	var it model.NewSchool
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "code":
+			var err error
+			it.Code, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "homepage":
+			var err error
+			it.Homepage, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -2930,6 +3195,37 @@ func (ec *executionContext) _Lecture(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "createSchool":
+			out.Values[i] = ec._Mutation_createSchool(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2995,6 +3291,8 @@ func (ec *executionContext) _School(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "description":
+			out.Values[i] = ec._School_description(ctx, field, obj)
 		case "homepage":
 			out.Values[i] = ec._School_homepage(ctx, field, obj)
 		case "classes":
@@ -3006,6 +3304,34 @@ func (ec *executionContext) _School(ctx context.Context, sel ast.SelectionSet, o
 					}
 				}()
 				res = ec._School_classes(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "dateCreated":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._School_dateCreated(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "dateModified":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._School_dateModified(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3544,6 +3870,14 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNNewSchool2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐNewSchool(ctx context.Context, v interface{}) (model.NewSchool, error) {
+	return ec.unmarshalInputNewSchool(ctx, v)
+}
+
+func (ec *executionContext) marshalNSchool2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐSchool(ctx context.Context, sel ast.SelectionSet, v model.School) graphql.Marshaler {
+	return ec._School(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNSchool2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐSchool(ctx context.Context, sel ast.SelectionSet, v []*model.School) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -3579,6 +3913,16 @@ func (ec *executionContext) marshalNSchool2ᚕᚖgithubᚗcomᚋvikelabsᚋlecsh
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalNSchool2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐSchool(ctx context.Context, sel ast.SelectionSet, v *model.School) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._School(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

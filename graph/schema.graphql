@@ -8,6 +8,7 @@ type Query {
 
 type Mutation {
     createSchool(input: NewSchool!): School!
+    # updateSchool(input: UpdateSchool!): School!
 }
 
 input NewSchool {
@@ -23,6 +24,8 @@ type School {
     description: String
     homepage: String
     classes: [Class]!
+    dateCreated: String!
+    dateModified: String!
 }
 
 type Class {

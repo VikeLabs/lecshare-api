@@ -18,11 +18,11 @@ type Instructor struct {
 	LastName   string  `json:"lastName"`
 }
 
-type School struct {
-	Name     string   `json:"name"`
-	Code     string   `json:"code"`
-	Homepage *string  `json:"homepage"`
-	Classes  []*Class `json:"classes"`
+type NewSchool struct {
+	Name        string  `json:"name"`
+	Code        string  `json:"code"`
+	Description *string `json:"description"`
+	Homepage    *string `json:"homepage"`
 }
 
 type Transcription struct {

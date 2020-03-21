@@ -10,19 +10,17 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/guregu/dynamo"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
-
-/* Environment variables are required for AWS auth:
-export AWS_ACCESS_KEY=EXAMPLE123
-export AWS_SECRET_KEY=EXAMPLE123/123121
-*/
 
 func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
 	return obj.Lectures, nil
@@ -62,32 +60,50 @@ func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture)
 	return &transcription, nil
 }
 
-func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {
-	// open schools.json
-	schoolsJSONFile, err := os.Open("public/schools.json")
+func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error) {
+	// note: the same table is used used accross the entire base application.
+	tableName := os.Getenv("tableName")
+	fmt.Println(tableName)
+	// TODO get session from ctx
+	db := dynamo.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
+	table := db.Table(tableName)
+
+	school := model.School{
+		PK:           "ORG",
+		SK:           input.Code,
+		Name:         input.Name,
+		Code:         input.Code,
+		Description:  input.Description,
+		Homepage:     input.Homepage,
+		DateCreated:  time.Now(),
+		DateModified: time.Now(),
+	}
+
+	err := table.Put(school).If("attribute_not_exists(PK)").Run()
 	if err != nil {
-		panic(err)
+		return nil, gqlerror.Errorf("Error: enable to create new School record.")
+
+	}
+	return &school, nil
+}
+
+func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {
+	// note: the same table is used used accross the entire base application.
+	tableName := os.Getenv("tableName")
+	// TODO get session from ctx
+	db := dynamo.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
+	table := db.Table(tableName)
+
+	var schools []model.School
+	var schoolsRef []*model.School
+	table.Get("PK", "ORG").All(&schools)
+
+	// convert to slice of pointers.
+	for i := 0; i < len(schools); i++ {
+		schoolsRef = append(schoolsRef, &schools[i])
 	}
 
-	defer schoolsJSONFile.Close()
-
-	// read into a byte[]
-	byteValue, _ := ioutil.ReadAll(schoolsJSONFile)
-
-	var schools []*model.School
-	var schoolsFiltered []*model.School
-
-	json.Unmarshal(byteValue, &schools)
-
-	if code != nil && len(*code) > 0 {
-		for _, v := range schools {
-			if v.Code == *code {
-				schoolsFiltered = append(schoolsFiltered, v)
-			}
-		}
-		return schoolsFiltered, nil
-	}
-	return schools, nil
+	return schoolsRef, nil
 }
 
 func (r *schoolResolver) Classes(ctx context.Context, obj *model.School) ([]*model.Class, error) {
@@ -126,11 +142,22 @@ func (r *schoolResolver) Classes(ctx context.Context, obj *model.School) ([]*mod
 	return nil, nil
 }
 
+func (r *schoolResolver) DateCreated(ctx context.Context, obj *model.School) (string, error) {
+	return obj.DateCreated.String(), nil
+}
+
+func (r *schoolResolver) DateModified(ctx context.Context, obj *model.School) (string, error) {
+	return obj.DateCreated.String(), nil
+}
+
 // Class returns generated.ClassResolver implementation.
 func (r *Resolver) Class() generated.ClassResolver { return &classResolver{r} }
 
 // Lecture returns generated.LectureResolver implementation.
 func (r *Resolver) Lecture() generated.LectureResolver { return &lectureResolver{r} }
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
@@ -140,5 +167,6 @@ func (r *Resolver) School() generated.SchoolResolver { return &schoolResolver{r}
 
 type classResolver struct{ *Resolver }
 type lectureResolver struct{ *Resolver }
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type schoolResolver struct{ *Resolver }
