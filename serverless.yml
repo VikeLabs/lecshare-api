@@ -1,11 +1,30 @@
 service: lecshare-api
-
+custom:
+  # try to use the argument, then the provider stage
+  stage: ${opt:stage, self:provider.stage}
+  tableName: lecshare-api-${self:custom.stage}
 provider:
   name: aws
   region: us-west-2 # oregon
   memorySize: 128
   runtime: go1.x
   # stage: production
+  iamRoleStatements:
+  - Effect: Allow
+    Action:
+      - dynamodb:DescribeTable
+      - dynamodb:Query
+      - dynamodb:Scan
+      - dynamodb:GetItem
+      - dynamodb:PutItem
+      - dynamodb:UpdateItem
+      - dynamodb:DeleteItem
+    # Restrict our IAM role permissions to
+    # the specific table for the stage
+    Resource:
+      - "Fn::GetAtt": [ LecshareTable, Arn ]
+environment:
+  tableName: ${self:custom.tableName}
 functions:
   playground:
     description: GraphQL Playground Lambda
@@ -31,18 +50,26 @@ functions:
           path: /query
           method: post
           cors: true
+resources:
+  Resources:
+    LecshareTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+          - AttributeName: sk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
 package:
   # configuration of the files required in this service.
   exclude:
     - ./**
   include:
     - ./bin/**
-# custom:
-#   customDomain:
-#     domainName: api.vikelabs.ca/lecshare/
-#     stage: ci
-#     basePath: api
-#     certificateName: '*.foo.com'
-#     createRoute53Record: true
-#     endpointType: 'regional'
-#     securityPolicy: tls_1_2
