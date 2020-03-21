@@ -6,9 +6,21 @@ type Query {
     schools(code: String): [School]!
 }
 
+type Mutation {
+    createSchool(input: NewSchool!): School!
+}
+
+input NewSchool {
+    name: String!
+    code: String!
+    description: String
+    homepage: String
+}
+
 type School {
     name: String!
     code: String!
+    description: String
     homepage: String
     classes: [Class]!
 }
