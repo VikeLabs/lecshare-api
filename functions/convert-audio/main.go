@@ -54,7 +54,7 @@ func downloadS3(key string) {
 	}
 }
 
-func uploadS3(key string, oldKey string) {
+func uploadS3(key string, oldKey string, bitrate int) {
 	file, err := os.Open(key)
 	if err != nil {
 		log.Fatal(err)
@@ -74,6 +74,7 @@ func uploadS3(key string, oldKey string) {
 		ContentType: aws.String("audio/ogg"),
 		Metadata: aws.StringMap(map[string]string{
 			"uncompressed-file-key": oldKey,
+			"bitrate":               string(bitrate),
 		}),
 	})
 	if err != nil {
@@ -82,12 +83,13 @@ func uploadS3(key string, oldKey string) {
 	fmt.Println("Uploaded", key)
 }
 
-func encodeAudio(filename string) string {
+// Bitrate is in kbps
+func encodeAudio(filename string, bitrate int) string {
 	baseName := strings.TrimSuffix(filename, path.Ext(filename))
 	outName := baseName + "-compressed.ogg"
 
 	out, err := exec.Command("/opt/bin/ffmpeg", "-y", "-i", filename, "-c:a", "libopus",
-		"-ac", "1", "-b:a", "128k", outName).CombinedOutput()
+		"-ac", "1", "-b:a", string(bitrate)+"k", outName).CombinedOutput()
 
 	if err != nil {
 		log.Fatalln(err, string(out))
@@ -104,10 +106,12 @@ func main() {
 	}
 	key := os.Args[1]
 
+	bitrate := 120
+
 	// Where the magic happens
 	downloadS3(key)
-	outKey := encodeAudio(key)
-	uploadS3(outKey, key)
+	outKey := encodeAudio(key, bitrate)
+	uploadS3(outKey, key, bitrate)
 
 	// Cleanup
 	err := os.Remove(key)
