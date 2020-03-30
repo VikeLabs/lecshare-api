@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-func downloadAWS(key string) {
+func downloadS3(key string) {
 	dir, _ := path.Split(key)
 
 	err := os.MkdirAll(dir, 0755)
@@ -54,7 +54,7 @@ func downloadAWS(key string) {
 	}
 }
 
-func uploadAWS(key string, oldKey string) {
+func uploadS3(key string, oldKey string) {
 	file, err := os.Open(key)
 	if err != nil {
 		log.Fatal(err)
@@ -105,9 +105,9 @@ func main() {
 	key := os.Args[1]
 
 	// Where the magic happens
-	downloadAWS(key)
+	downloadS3(key)
 	outKey := encodeAudio(key)
-	uploadAWS(outKey, key)
+	uploadS3(outKey, key)
 
 	// Cleanup
 	err := os.Remove(key)
