@@ -54,7 +54,7 @@ func downloadAWS(key string) {
 	}
 }
 
-func uploadAWS(key string) {
+func uploadAWS(key string, oldKey string) {
 	file, err := os.Open(key)
 	if err != nil {
 		log.Fatal(err)
@@ -68,9 +68,13 @@ func uploadAWS(key string) {
 	uploader := s3manager.NewUploader(sess)
 
 	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String("assets-lecshare.oimo.ca"),
-		Key:    aws.String(key),
-		Body:   file,
+		Bucket:      aws.String("assets-lecshare.oimo.ca"),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String("audio/ogg"),
+		Metadata: aws.StringMap(map[string]string{
+			"uncompressed-file-key": oldKey,
+		}),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -82,8 +86,8 @@ func encodeAudio(filename string) string {
 	baseName := strings.TrimSuffix(filename, path.Ext(filename))
 	outName := baseName + "-compressed.ogg"
 
-	out, err := exec.Command("/opt/bin/ffmpeg", "-i", filename, "-c:a", "libopus", "-ac", "1",
-		"-b:a", "128k", outName).CombinedOutput()
+	out, err := exec.Command("/opt/bin/ffmpeg", "-y", "-i", filename, "-c:a", "libopus",
+		"-ac", "1", "-b:a", "128k", outName).CombinedOutput()
 
 	if err != nil {
 		log.Fatalln(err, string(out))
@@ -94,16 +98,19 @@ func encodeAudio(filename string) string {
 }
 
 func main() {
+	if len(os.Args) != 2 {
+		fmt.Println("Please specify an S3 key")
+		return
+	}
 	key := os.Args[1]
 
 	// Where the magic happens
 	downloadAWS(key)
 	outKey := encodeAudio(key)
-	uploadAWS(outKey)
+	uploadAWS(outKey, key)
 
 	// Cleanup
-	dir, _ := path.Split(key)
-	err := os.RemoveAll(dir)
+	err := os.Remove(key)
 	if err != nil {
 		log.Fatal(err)
 	}
