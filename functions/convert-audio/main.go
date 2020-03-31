@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -99,23 +102,26 @@ func encodeAudio(filename string, bitrate int) string {
 	return outName
 }
 
-func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Please specify an S3 key")
-		return
-	}
-	key := os.Args[1]
-
-	bitrate := 120
+func processAudio(key string) {
+	bitrate := 128
 
 	// Where the magic happens
 	downloadS3(key)
 	outKey := encodeAudio(key, bitrate)
 	uploadS3(outKey, key, bitrate)
+	fmt.Print("\n")
+}
 
-	// Cleanup
-	err := os.Remove(key)
-	if err != nil {
-		log.Fatal(err)
+func newAudioHandler(ctx context.Context, event events.S3Event) error {
+	for _, r := range event.Records {
+		key := r.S3.Object.Key
+		fmt.Println("Processing ", key)
+		processAudio(key)
 	}
+
+	return nil
+}
+
+func main() {
+	lambda.Start(newAudioHandler)
 }

@@ -15,6 +15,8 @@ github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0/go.mod h1:t2tdK
 github.com/aws/aws-lambda-go v0.0.0-20190129190457-dcf76fe64fb6/go.mod h1:zUsUQhAUjYzR8AuduJPCfhBuKWUaDbQiPOG+ouzmE1A=
 github.com/aws/aws-lambda-go v1.14.0 h1:kTr1VPabIgJsMVzHuZpNhs/5RR46LU6wyWUiHxtb3ag=
 github.com/aws/aws-lambda-go v1.14.0/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
+github.com/aws/aws-lambda-go v1.16.0 h1:9+Pp1/6cjEXYhwadp8faFXKSOWt7/tHRCnQxQmKvVwM=
+github.com/aws/aws-lambda-go v1.16.0/go.mod h1:FEwgPLE6+8wcGBTe5cJN3JWurd1Ztm9zN4jsXsjzKKw=
 github.com/aws/aws-sdk-go v1.19.18/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.29.21 h1:Q9XdxpJImp2HF/AqtIlonnAtG3qU9TvhpZiy1AeuQY4=
 github.com/aws/aws-sdk-go v1.29.21/go.mod h1:1KvfttTE3SPKMpo8g2c6jL3ZKfXtFvKscTgahTma5Xg=
