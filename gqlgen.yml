@@ -62,7 +62,3 @@ models:
     fields:
       lectures:
         resolver: true
-  Lecture:
-    fields:
-      transcription:
-        resolver: true
