@@ -2,14 +2,11 @@
 
 package model
 
-type Class struct {
-	Title       string        `json:"title"`
-	Subject     string        `json:"subject"`
-	Code        string        `json:"code"`
-	Term        string        `json:"term"`
-	Instructors []*Instructor `json:"instructors"`
-	Lectures    []*Lecture    `json:"lectures"`
-}
+import (
+	"time"
+
+	"github.com/99designs/gqlgen/graphql"
+)
 
 type Instructor struct {
 	Title      *string `json:"title"`
@@ -18,11 +15,24 @@ type Instructor struct {
 	LastName   string  `json:"lastName"`
 }
 
-type NewSchool struct {
+type NewClass struct {
+	Term    string `json:"term"`
+	Section string `json:"section"`
+}
+
+type NewCourse struct {
 	Name        string  `json:"name"`
+	Subject     string  `json:"subject"`
 	Code        string  `json:"code"`
-	Description *string `json:"description"`
+	Description string  `json:"description"`
 	Homepage    *string `json:"homepage"`
+}
+
+type NewLecture struct {
+	File        graphql.Upload `json:"file"`
+	Date        time.Time      `json:"date"`
+	Name        *string        `json:"name"`
+	Description *string        `json:"description"`
 }
 
 type Transcription struct {
