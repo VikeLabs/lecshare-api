@@ -5,6 +5,13 @@ help:
 
 functions := $(shell find functions -name \*main.go | awk -F'/' '{print $$2}')
 
+ffmpeg: ## Build ffmpeg layer
+	mkdir -p build/layer/bin
+	mkdir -p layer/ffmpeg
+	rm -rf build/ffmpeg*
+	cd build && curl https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz | tar -Jx
+	mv build/ffmpeg*/ffmpeg build/ffmpeg*/ffprobe layer/ffmpeg/
+
 build: ## Build golang binaries
 	@for function in $(functions) ; do \
 		env GOOS=linux go build -ldflags="-s -w" -o bin/$$function functions/$$function/main.go ; \
