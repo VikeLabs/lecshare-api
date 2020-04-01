@@ -12,14 +12,42 @@ type Query {
 
 type Mutation {
     createSchool(input: NewSchool!): School!
-    # updateSchool(input: UpdateSchool!): School!
+    createCourse(input: NewCourse! schoolKey: String!): Course!
+    createClass(input: NewClass! schoolKey: String! courseKey: String!): Class!
+
+    # mutation below contains file uploading.
+    createLecture(input: NewLecture! schoolKey: String! courseKey: String! classKey: String!): Lecture!
 }
 
+# Creates a new school.
 input NewSchool {
     name: String!
     code: String!
     description: String
     homepage: String
+}
+
+# Create a new course, within a school.
+input NewCourse {
+    name: String!
+    subject: String!
+    code: String!
+    description: String!
+    homepage: String
+}
+
+# Creates a new class, within a course.
+input NewClass {
+    term: String!
+    section: String!
+}
+
+# Create a new lecture, within a class.
+input NewLecture {
+    file: Upload!
+    date: Time!
+    name: String
+    description: String
 }
 
 type School {
