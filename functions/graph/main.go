@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
+	"github.com/guregu/dynamo"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 )
@@ -20,7 +24,18 @@ func lambdaHandler(ctx context.Context, req events.APIGatewayProxyRequest) (even
 }
 
 func main() {
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	session := session.New(&aws.Config{Region: aws.String("us-west-2")})
+	db := dynamo.New(session)
+
+	bucketName := os.Getenv("bucketName")
+	tableName := os.Getenv("tableName")
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+		Session:    session,
+		DB:         db,
+		TableName:  &tableName,
+		BucketName: &bucketName,
+	}}))
 
 	h = httpadapter.New(srv)
 
