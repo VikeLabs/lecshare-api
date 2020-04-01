@@ -55,27 +55,40 @@ type School {
     code: String!
     description: String
     homepage: String
+    courses: [Course]!
+    dateCreated: Time!
+    dateModified: Time!
+}
+
+type Course {
+    name: String!
+    subject: String!
+    code: String!
+    description: String
+    homepage: String
     classes: [Class]!
-    dateCreated: String!
-    dateModified: String!
 }
 
 type Class {
-    title: String! # Fundamentals of Programming II
+    name: String! 
     subject: String!
     code: String!
     term: String!
+    section: String!
     instructors: [Instructor]! 
     lectures: [Lecture]
+    dateCreated: Time!
+    dateModified: Time!
 }
 
 type Lecture {
-    title: String
+    name: String
     description: String
-    datetime: String
     audio: String
     duration: Int!
     transcription: Transcription!
+    dateCreated: Time!
+    dateModified: Time!
 }
 
 type Instructor {
