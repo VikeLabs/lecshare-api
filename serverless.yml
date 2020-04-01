@@ -2,7 +2,7 @@ service: lecshare-api
 
 custom:
   generalBucket: assets-lecshare.oimo.ca
-  #audioBucket: lecshare-api-audio
+  audioBucket: lecshare-api-audio
   # try to use the argument, then the provider stage
   stage: ${opt:stage, self:provider.stage}
   tableName: lecshare-api-${self:custom.stage}
@@ -42,11 +42,11 @@ provider:
       - s3:GetObject
       - s3:PutObject
     Resource: "arn:aws:s3:::${self:custom.generalBucket}/*"
-  #- Effect: Allow
-  #  Action:
-  #    - s3:GetObject
-  #    - s3:PutObject
-  #  Resource: "arn:aws:s3:::${self:custom.audioBucket}/*"
+  - Effect: Allow
+    Action:
+      - s3:GetObject
+      - s3:PutObject
+    Resource: "arn:aws:s3:::${self:custom.audioBucket}/*"
 
 environment:
   tableName: ${self:custom.tableName}
@@ -82,7 +82,9 @@ functions:
     events:
       - s3:
         #bucket: ${self:custom.audioBucket}
-        bucket: lecshare-api-audio
+        # Use general bucket for now
+        bucket: ${self:custom.generalBucket}
+        existing: true
         event: s3:ObjectCreated:*
         rules:
           - suffix: .flac

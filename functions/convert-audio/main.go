@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -22,12 +23,16 @@ import (
 
 func downloadS3(key string, bucket string) {
 	dir, _ := path.Split(key)
+	dir = "/tmp/" + dir
 
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		log.Fatalln(err)
+	if dir != "" {
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
-	file, err := os.Create(key)
+
+	file, err := os.Create("/tmp/" + key)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -58,7 +63,7 @@ func downloadS3(key string, bucket string) {
 }
 
 func uploadS3(key string, oldKey string, bitrate int) {
-	file, err := os.Open(key)
+	file, err := os.Open("/tmp/" + key)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -91,8 +96,12 @@ func encodeAudio(filename string, bitrate int) string {
 	baseName := strings.TrimSuffix(filename, path.Ext(filename))
 	outName := baseName + "-compressed.ogg"
 
-	out, err := exec.Command("/opt/ffmpeg/ffmpeg", "-y", "-i", filename, "-c:a", "libopus",
-		"-ac", "1", "-b:a", string(bitrate)+"k", outName).CombinedOutput()
+	cmd := exec.Command("/opt/ffmpeg/ffmpeg", "-y", "-i", "/tmp/"+filename, "-c:a", "libopus",
+		"-ac", "1", "-b:a", strconv.Itoa(bitrate)+"k", "/tmp/"+outName)
+
+	fmt.Println("Executing: " + cmd.Path + " " + strings.Join(cmd.Args, " "))
+
+	out, err := cmd.CombinedOutput()
 
 	if err != nil {
 		log.Fatalln(err, string(out))
