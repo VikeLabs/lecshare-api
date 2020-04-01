@@ -20,6 +20,8 @@ jobs:
       env:
         TOKEN: ${{ secrets.TOKEN }}
       run: make build
+    - name: Build ffmpeg layer
+      run: make ffmpeg
     - name: serverless deploy
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
