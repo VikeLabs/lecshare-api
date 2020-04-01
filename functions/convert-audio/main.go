@@ -20,7 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-func downloadS3(key string) {
+func downloadS3(key string, bucket string) {
 	dir, _ := path.Split(key)
 
 	err := os.MkdirAll(dir, 0755)
@@ -42,7 +42,7 @@ func downloadS3(key string) {
 	downloader := s3manager.NewDownloader(sess)
 	numBytes, err := downloader.Download(buff,
 		&s3.GetObjectInput{
-			Bucket: aws.String("assets-lecshare.oimo.ca"),
+			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 		})
 
@@ -91,7 +91,7 @@ func encodeAudio(filename string, bitrate int) string {
 	baseName := strings.TrimSuffix(filename, path.Ext(filename))
 	outName := baseName + "-compressed.ogg"
 
-	out, err := exec.Command("/opt/bin/ffmpeg", "-y", "-i", filename, "-c:a", "libopus",
+	out, err := exec.Command("/opt/ffmpeg/ffmpeg", "-y", "-i", filename, "-c:a", "libopus",
 		"-ac", "1", "-b:a", string(bitrate)+"k", outName).CombinedOutput()
 
 	if err != nil {
@@ -102,11 +102,11 @@ func encodeAudio(filename string, bitrate int) string {
 	return outName
 }
 
-func processAudio(key string) {
+func processAudio(key string, s3object events.S3Entity) {
 	bitrate := 128
 
 	// Where the magic happens
-	downloadS3(key)
+	downloadS3(key, s3object.Bucket.Name)
 	outKey := encodeAudio(key, bitrate)
 	uploadS3(outKey, key, bitrate)
 	fmt.Print("\n")
@@ -116,7 +116,7 @@ func newAudioHandler(ctx context.Context, event events.S3Event) error {
 	for _, r := range event.Records {
 		key := r.S3.Object.Key
 		fmt.Println("Processing ", key)
-		processAudio(key)
+		processAudio(key, r.S3)
 	}
 
 	return nil
