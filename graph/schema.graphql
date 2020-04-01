@@ -1,3 +1,7 @@
+# File Uploads 
+scalar Upload
+scalar Time
+
 schema {
     query: Query
 }
