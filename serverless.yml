@@ -23,6 +23,9 @@ provider:
   memorySize: 128
   runtime: go1.x
   # stage: production
+  environment:
+    tableName: ${self:custom.tableName}
+    bucketName: ${self:custom.generalBucket}
   iamRoleStatements:
   - Effect: Allow
     Action:
@@ -47,10 +50,6 @@ provider:
       - s3:GetObject
       - s3:PutObject
     Resource: "arn:aws:s3:::${self:custom.audioBucket}/*"
-
-environment:
-  tableName: ${self:custom.tableName}
-
 functions:
   playground:
     description: GraphQL Playground Lambda
