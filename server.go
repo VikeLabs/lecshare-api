@@ -4,10 +4,14 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/guregu/dynamo"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 )
@@ -22,8 +26,18 @@ func main() {
 	flag.StringVar(&host, "h", "localhost", "specfiy host to bind to")
 
 	flag.Parse()
+	session := session.New(&aws.Config{Region: aws.String("us-west-2")})
+	db := dynamo.New(session)
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	bucketName := os.Getenv("bucketName")
+	tableName := os.Getenv("tableName")
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+		Session:    session,
+		DB:         db,
+		TableName:  &tableName,
+		BucketName: &bucketName,
+	}}))
 
 	// define routes for development.
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
