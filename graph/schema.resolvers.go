@@ -10,9 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/go-playground/validator/v10"
 	"github.com/guregu/dynamo"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vikelabs/lecshare-api/graph/generated"
@@ -82,7 +84,14 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewScho
 	db := r.DB
 	table := db.Table(*r.TableName)
 
-	// TODO input validation
+	// input validation
+	err := r.Validate.Struct(input)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			graphql.AddErrorf(ctx, "field: %s, error: %s", err.StructField(), err.Tag())
+		}
+		return nil, gqlerror.Errorf("Error input errors")
+	}
 
 	// create new school instance
 	school := model.School{
@@ -97,7 +106,7 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewScho
 	}
 
 	// attempt to put into table if it does not exist.
-	err := table.Put(school).If("attribute_not_exists(PK)").Run()
+	err = table.Put(school).If("attribute_not_exists(PK)").Run()
 	if err != nil {
 		return nil, gqlerror.Errorf("Error: enable to create new School record.")
 
