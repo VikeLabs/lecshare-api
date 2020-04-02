@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-playground/validator/v10"
 	"github.com/guregu/dynamo"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
@@ -32,11 +33,14 @@ func main() {
 	bucketName := os.Getenv("bucketName")
 	tableName := os.Getenv("tableName")
 
+	validate := validator.New()
+
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		Session:    session,
 		DB:         db,
 		TableName:  &tableName,
 		BucketName: &bucketName,
+		Validate:   validate,
 	}}))
 
 	// define routes for development.
