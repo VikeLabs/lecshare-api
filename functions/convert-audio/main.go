@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -123,7 +124,10 @@ func processAudio(key string, s3object events.S3Entity) {
 
 func newAudioHandler(ctx context.Context, event events.S3Event) error {
 	for _, r := range event.Records {
-		key := r.S3.Object.Key
+		key, err := url.QueryUnescape(r.S3.Object.Key)
+		if err != nil {
+			return err
+		}
 		fmt.Println("Processing ", key)
 		processAudio(key, r.S3)
 	}
