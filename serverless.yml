@@ -20,7 +20,7 @@ custom:
 provider:
   name: aws
   region: us-west-2 # oregon
-  memorySize: 128
+  memorySize: 512
   runtime: go1.x
   # stage: production
   environment:
@@ -78,6 +78,7 @@ functions:
   convert-audio:
     description: Converts Lecture Audio
     handler: bin/convert-audio
+    memorySize: 1024
     events:
       - s3:
         #bucket: ${self:custom.audioBucket}
