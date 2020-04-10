@@ -22,9 +22,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+var ffmpegDir string
+var layerDir string
+
 func downloadS3(key string, bucket string) {
 	dir, _ := path.Split(key)
-	dir = "/tmp/" + dir
+	dir = layerDir + dir
 
 	if dir != "" {
 		err := os.MkdirAll(dir, 0755)
@@ -33,7 +36,7 @@ func downloadS3(key string, bucket string) {
 		}
 	}
 
-	file, err := os.Create("/tmp/" + key)
+	file, err := os.Create(layerDir + key)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -64,7 +67,7 @@ func downloadS3(key string, bucket string) {
 }
 
 func uploadS3(key string, oldKey string, bitrate int) {
-	file, err := os.Open("/tmp/" + key)
+	file, err := os.Open(layerDir + key)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,15 +100,23 @@ func encodeAudio(filename string, bitrate int) string {
 	baseName := strings.TrimSuffix(filename, path.Ext(filename))
 	outName := baseName + "-compressed.ogg"
 
-	cmd := exec.Command("/opt/ffmpeg/ffmpeg", "-y", "-i", "/tmp/"+filename, "-c:a", "libopus",
-		"-ac", "1", "-b:a", strconv.Itoa(bitrate)+"k", "/tmp/"+outName)
+	cmd := exec.Command(ffmpegDir+"ffmpeg", "-f", "flac", "-i", "pipe:", "-y", "-c:a", "libopus",
+		"-ac", "1", "-b:a", strconv.Itoa(bitrate)+"k", "-f", "opus", "pipe:")
 
-	fmt.Println("Executing: " + cmd.Path + " " + strings.Join(cmd.Args, " "))
+	//cmd := exec.Command("ffmpeg", "-f", "flac", "-i", "pipe:", "-y", "-c:a", "libopus",
+	// "-ac", "1", "-b:a", strconv.Itoa(bitrate)+"k", "-f", "opus", "pipe:")
 
-	out, err := cmd.CombinedOutput()
+	fmt.Println("Executing: " + strings.Join(cmd.Args, " "))
+
+	cmd.Stdin, _ = os.Open(filename)
+	cmd.Stdout, _ = os.Create(outName)
+
+	err := cmd.Run()
+	// out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		log.Fatalln(err, string(out))
+		// log.Fatalln(err, string(out))
+		log.Fatalln(err)
 	}
 	fmt.Println("Created", outName)
 
@@ -133,6 +144,13 @@ func newAudioHandler(ctx context.Context, event events.S3Event) error {
 	}
 
 	return nil
+}
+
+func init() {
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
+		ffmpegDir = "/opt/ffmpeg/"
+		layerDir = "/tmp/"
+	}
 }
 
 func main() {

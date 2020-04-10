@@ -5,3 +5,4 @@ vendor
 .serverless
 *.coverprofile
 node_modules
+functions/test
