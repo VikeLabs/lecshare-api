@@ -1,11 +1,9 @@
-// This is NOT a Lambda function yet, as there is no handler
-// TODO Make this a proper Lambda function
-
 package main
 
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/url"
 	"os"
@@ -13,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -22,31 +21,27 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-func downloadS3(key string, bucket string) {
-	dir, _ := path.Split(key)
-	dir = "/tmp/" + dir
+var ffmpegDir string
 
-	if dir != "" {
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
+// Only use this with downloader.Concurrency = 1, otherwise it will break.
+type fakeWriterAt struct {
+	w io.Writer
+}
 
-	file, err := os.Create("/tmp/" + key)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer file.Close()
+func (fw fakeWriterAt) WriteAt(p []byte, offset int64) (n int, err error) {
+	// ignore 'offset' because we forced sequential downloads
+	return fw.w.Write(p)
+}
 
-	buff := &aws.WriteAtBuffer{}
-
+func downloadS3(key string, bucket string, outPipe *io.PipeWriter, wg *sync.WaitGroup) {
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2"),
 	})
 
 	downloader := s3manager.NewDownloader(sess)
-	numBytes, err := downloader.Download(buff,
+	// Disable concurrency to sequentially stream the file
+	downloader.Concurrency = 1
+	numBytes, err := downloader.Download(fakeWriterAt{outPipe},
 		&s3.GetObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
@@ -56,20 +51,12 @@ func downloadS3(key string, bucket string) {
 		log.Fatalln(err)
 	}
 
-	fmt.Println("Downloaded", key, numBytes, "bytes")
-	_, err = file.Write(buff.Bytes())
-	if err != nil {
-		log.Fatalln(err)
-	}
+	fmt.Println(">> Downloaded", key, numBytes, "bytes")
+	outPipe.Close()
+	wg.Done()
 }
 
-func uploadS3(key string, oldKey string, bitrate int) {
-	file, err := os.Open("/tmp/" + key)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
+func uploadS3(key string, oldKey string, bitrate int, inPipe *io.PipeReader, wg *sync.WaitGroup) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2")},
 	)
@@ -79,7 +66,7 @@ func uploadS3(key string, oldKey string, bitrate int) {
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		Bucket:      aws.String("assets-lecshare.oimo.ca"),
 		Key:         aws.String(key),
-		Body:        file,
+		Body:        inPipe,
 		ContentType: aws.String("audio/ogg"),
 		Metadata: aws.StringMap(map[string]string{
 			"uncompressed-file-key": oldKey,
@@ -89,37 +76,50 @@ func uploadS3(key string, oldKey string, bitrate int) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Uploaded", key)
+	fmt.Println(">> Uploaded", key)
+	inPipe.Close()
+	wg.Done()
 }
 
 // Bitrate is in kbps
-func encodeAudio(filename string, bitrate int) string {
-	baseName := strings.TrimSuffix(filename, path.Ext(filename))
-	outName := baseName + "-compressed.ogg"
+func encodeAudio(bitrate int, inPipe *io.PipeReader, outPipe *io.PipeWriter, wg *sync.WaitGroup) {
+	cmd := exec.Command(ffmpegDir+"ffmpeg", "-f", "flac", "-i", "pipe:", "-y", "-c:a", "libopus",
+		"-ac", "1", "-b:a", strconv.Itoa(bitrate)+"k", "-f", "opus", "pipe:")
 
-	cmd := exec.Command("/opt/ffmpeg/ffmpeg", "-y", "-i", "/tmp/"+filename, "-c:a", "libopus",
-		"-ac", "1", "-b:a", strconv.Itoa(bitrate)+"k", "/tmp/"+outName)
+	fmt.Println(">> Executing: " + strings.Join(cmd.Args, " "))
 
-	fmt.Println("Executing: " + cmd.Path + " " + strings.Join(cmd.Args, " "))
+	cmd.Stdin = inPipe
+	cmd.Stdout = outPipe
+	//cmd.Stderr = os.Stderr
 
-	out, err := cmd.CombinedOutput()
+	// Wait for command to complete.
+	err := cmd.Run()
 
 	if err != nil {
-		log.Fatalln(err, string(out))
+		log.Fatalln(err)
 	}
-	fmt.Println("Created", outName)
-
-	return outName
+	fmt.Println(">> Processed file.")
+	inPipe.Close()
+	outPipe.Close()
+	wg.Done()
 }
 
 func processAudio(key string, s3object events.S3Entity) {
 	bitrate := 128
 
+	outKey := strings.TrimSuffix(key, path.Ext(key)) + "-compressed.ogg"
+
+	inRead, inWrite := io.Pipe()
+	outRead, outWrite := io.Pipe()
+	wg := sync.WaitGroup{}
+
 	// Where the magic happens
-	downloadS3(key, s3object.Bucket.Name)
-	outKey := encodeAudio(key, bitrate)
-	uploadS3(outKey, key, bitrate)
+	wg.Add(3)
+	go downloadS3(key, s3object.Bucket.Name, inWrite, &wg)
+	go encodeAudio(bitrate, inRead, outWrite, &wg)
+	go uploadS3(outKey, key, bitrate, outRead, &wg)
 	fmt.Print("\n")
+	wg.Wait()
 }
 
 func newAudioHandler(ctx context.Context, event events.S3Event) error {
@@ -133,6 +133,12 @@ func newAudioHandler(ctx context.Context, event events.S3Event) error {
 	}
 
 	return nil
+}
+
+func init() {
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
+		ffmpegDir = "/opt/ffmpeg/"
+	}
 }
 
 func main() {
