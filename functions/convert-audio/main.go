@@ -1,6 +1,3 @@
-// This is NOT a Lambda function yet, as there is no handler
-// TODO Make this a proper Lambda function
-
 package main
 
 import (
