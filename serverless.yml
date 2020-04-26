@@ -3,6 +3,7 @@ service: lecshare-api
 custom:
   generalBucket: assets-lecshare.oimo.ca
   audioBucket: lecshare-api-audio
+  transcriptionBucket: lecshare-transcriptions
   # try to use the argument, then the provider stage
   stage: ${opt:stage, self:provider.stage}
   tableName: lecshare-api-${self:custom.stage}
@@ -50,6 +51,12 @@ provider:
       - s3:GetObject
       - s3:PutObject
     Resource: "arn:aws:s3:::${self:custom.audioBucket}/*"
+  - Effect: Allow
+    Action:
+      - s3:GetObject
+      - s3:PutObject
+      - s3:DeleteObject
+    Resource: "arn:aws:s3:::${self:custom.transcriptionBucket}/*"
 functions:
   playground:
     description: GraphQL Playground Lambda
@@ -90,6 +97,17 @@ functions:
           - suffix: .flac
     layers:
       - {Ref: FfmpegLambdaLayer}
+  store-transcription:
+    description: Puts transcription in proper bucket and folder
+    handler: bin/store-transcription
+    memorySize: 512
+    events:
+      - s3:
+        bucket: ${self:custom.transcriptionBucket}
+        existing: true
+        event: s3:ObjectCreated:*
+        rules:
+          - suffix: .json
 
 resources:
   Resources:
