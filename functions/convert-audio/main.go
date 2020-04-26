@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -107,10 +106,10 @@ func encodeAudio(bitrate int, inPipe *io.PipeReader, outPipe *io.PipeWriter, wg 
 	wg.Done()
 }
 
-func processAudio(key string, s3object events.S3Entity) {
+func processAudio(s3object events.S3Entity) {
 	bitrate := 128
-
-	outKey := strings.TrimSuffix(key, path.Ext(key)) + "-compressed.ogg"
+	key := s3object.Object.URLDecodedKey
+	outKey := strings.TrimSuffix(key, path.Ext(key)) + ".ogg"
 
 	inRead, inWrite := io.Pipe()
 	outRead, outWrite := io.Pipe()
@@ -126,7 +125,9 @@ func processAudio(key string, s3object events.S3Entity) {
 }
 
 func transcribeAudio(s3object events.S3Entity) {
-	jobName := "transcribe-" + s3object.Object.URLDecodedKey
+	key := s3object.Object.URLDecodedKey
+	// output file is jobName + ".json"
+	jobName := strings.TrimSuffix(key, path.Ext(key))
 	jobURI := "s3://" + s3object.Bucket.Name + "/" + s3object.Object.Key
 	//jobUri := "https://uvic-transcribe-test1.s3-us-west-2.amazonaws.com/vikelabs_test1_15sec.flac"
 	outBucket := testingBucket
@@ -160,19 +161,15 @@ func transcribeAudio(s3object events.S3Entity) {
 		log.Fatalln("Got error building project: ", err)
 	}
 
-	log.Println("Successfully created transcription job for ", s3object.Object.URLDecodedKey)
+	log.Println("Successfully created transcription job for", key)
 }
 
 func newAudioHandler(ctx context.Context, event events.S3Event) error {
 	for _, r := range event.Records {
-		key, err := url.QueryUnescape(r.S3.Object.Key)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Transcribing", key)
+		fmt.Println("Transcribing", r.S3.Object.URLDecodedKey)
 		transcribeAudio(r.S3)
-		fmt.Println("Processing ", key)
-		processAudio(key, r.S3)
+		fmt.Println("Processing ", r.S3.Object.URLDecodedKey)
+		processAudio(r.S3)
 	}
 
 	return nil

@@ -6,15 +6,25 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-// Unit testing is on hold until I get it to work with pipes.
-
 func TestProcessAudio(t *testing.T) {
-	// k := "test.flac"
-	k := "tell.flac"
+	k := "test.flac"
 	var s events.S3Entity
 	s.Bucket.Name = "assets-lecshare.oimo.ca"
-	processAudio(k, s)
+	s.Object.URLDecodedKey = k
+	s.Object.Key = k
+	processAudio(s)
 }
+
+func TestTranscribeAudio(t *testing.T) {
+	k := "test.flac"
+	var s events.S3Entity
+	s.Bucket.Name = "assets-lecshare.oimo.ca"
+	s.Object.URLDecodedKey = k
+	s.Object.Key = k
+	transcribeAudio(s)
+}
+
+// Unit testing is on hold until I get it to work with pipes.
 
 // func TestDownloadS3Object(t *testing.T) {
 // 	wg := sync.WaitGroup{}
