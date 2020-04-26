@@ -19,9 +19,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go/service/transcribeservice"
 )
 
 var ffmpegDir string
+
+const testingBucket = "assets-lecshare.oimo.ca"
 
 // Only use this with downloader.Concurrency = 1, otherwise it will break.
 type fakeWriterAt struct {
@@ -56,7 +59,7 @@ func downloadS3(key string, bucket string, outPipe *io.PipeWriter, wg *sync.Wait
 	wg.Done()
 }
 
-func uploadS3(key string, oldKey string, bitrate int, inPipe *io.PipeReader, wg *sync.WaitGroup) {
+func uploadS3(key string, oldKey string, bucket string, bitrate int, inPipe *io.PipeReader, wg *sync.WaitGroup) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2")},
 	)
@@ -64,7 +67,7 @@ func uploadS3(key string, oldKey string, bitrate int, inPipe *io.PipeReader, wg 
 	uploader := s3manager.NewUploader(sess)
 
 	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket:      aws.String("assets-lecshare.oimo.ca"),
+		Bucket:      aws.String(bucket),
 		Key:         aws.String(key),
 		Body:        inPipe,
 		ContentType: aws.String("audio/ogg"),
@@ -117,9 +120,47 @@ func processAudio(key string, s3object events.S3Entity) {
 	wg.Add(3)
 	go downloadS3(key, s3object.Bucket.Name, inWrite, &wg)
 	go encodeAudio(bitrate, inRead, outWrite, &wg)
-	go uploadS3(outKey, key, bitrate, outRead, &wg)
+	go uploadS3(outKey, key, testingBucket, bitrate, outRead, &wg)
 	fmt.Print("\n")
 	wg.Wait()
+}
+
+func transcribeAudio(s3object events.S3Entity) {
+	jobName := "transcribe-" + s3object.Object.URLDecodedKey
+	jobURI := "s3://" + s3object.Bucket.Name + "/" + s3object.Object.Key
+	//jobUri := "https://uvic-transcribe-test1.s3-us-west-2.amazonaws.com/vikelabs_test1_15sec.flac"
+	outBucket := testingBucket
+
+	// open a new session
+	sess, _ := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2"),
+	})
+	log.Println("Opening Transcribe session")
+	transcriber := transcribeservice.New(sess)
+	// exit if unable to create a Transcribe session
+	if transcriber == nil {
+		log.Fatalln("Unable to create Transcribe session")
+	} else {
+		log.Println("Transcribe session successfully created")
+	}
+
+	mediaformat := "flac"
+	languagecode := "en-US"
+	log.Println("Creating transcription job")
+	var StrucMedia transcribeservice.Media
+	StrucMedia.MediaFileUri = &jobURI
+	_, err := transcriber.StartTranscriptionJob(&transcribeservice.StartTranscriptionJobInput{
+		TranscriptionJobName: &jobName,
+		Media:                &StrucMedia,
+		MediaFormat:          &mediaformat,
+		LanguageCode:         &languagecode,
+		OutputBucketName:     &outBucket,
+	})
+	if err != nil {
+		log.Fatalln("Got error building project: ", err)
+	}
+
+	log.Println("Successfully created transcription job for ", s3object.Object.URLDecodedKey)
 }
 
 func newAudioHandler(ctx context.Context, event events.S3Event) error {
@@ -128,6 +169,8 @@ func newAudioHandler(ctx context.Context, event events.S3Event) error {
 		if err != nil {
 			return err
 		}
+		fmt.Println("Transcribing", key)
+		transcribeAudio(r.S3)
 		fmt.Println("Processing ", key)
 		processAudio(key, r.S3)
 	}
