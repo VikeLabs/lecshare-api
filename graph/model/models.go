@@ -54,6 +54,10 @@ type Class struct {
 }
 
 type Lecture struct {
+	// DynamoDB
+	PK string `json:"id"`
+	SK string `json:"sk"`
+	// Attributes
 	Name          *string   `json:"title"`
 	Description   *string   `json:"description"`
 	Audio         *string   `json:"audio"`
