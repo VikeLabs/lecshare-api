@@ -17,6 +17,7 @@ import (
 )
 
 const testingBucket = "assets-lecshare.oimo.ca"
+const transcriptionBucket = "lecshare-transcriptions"
 
 func copyS3(srcKey string, srcBucket string, dstKey string, dstBucket string) {
 	sess, err := session.NewSession(&aws.Config{
