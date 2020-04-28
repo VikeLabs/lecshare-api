@@ -67,7 +67,7 @@ func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.Sch
 		fmt.Printf("%v\n", schools[0])
 		if err != nil {
 			fmt.Println(err)
-			return nil, fmt.Errorf("unable to find scholl with code %s", *code)
+			return nil, fmt.Errorf("unable to find school with code %s", *code)
 		}
 		schoolsRef[0] = &schools[0]
 		return schoolsRef, nil

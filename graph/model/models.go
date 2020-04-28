@@ -3,7 +3,7 @@ package model
 import "time"
 
 // School is the model used by GraphQL and DynamoDB
-// this is msnaully updated.
+// this is manually updated.
 type School struct {
 	// DynamoDB
 	PK string `json:"id"`

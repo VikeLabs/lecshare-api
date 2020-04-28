@@ -36,28 +36,13 @@ type NewLecture struct {
 }
 
 type Transcription struct {
-	Sections []*TranscriptionSection `json:"sections"`
-}
-
-type TranscriptionParagraph struct {
-	Transcript string               `json:"transcript"`
-	Confidence float64              `json:"confidence"`
-	Words      []*TranscriptionWord `json:"words"`
-}
-
-type TranscriptionSection struct {
-	Alternatives []*TranscriptionParagraph `json:"alternatives"`
-	LanguageCode string                    `json:"languageCode"`
+	Transcripts []*string            `json:"transcripts"`
+	Words       []*TranscriptionWord `json:"words"`
 }
 
 type TranscriptionWord struct {
-	Starttime  *WordTime `json:"starttime"`
-	Endtime    *WordTime `json:"endtime"`
-	Word       string    `json:"word"`
-	Confidence float64   `json:"confidence"`
-}
-
-type WordTime struct {
-	Seconds *string `json:"seconds"`
-	Nanos   *int    `json:"nanos"`
+	Type      string  `json:"type"`
+	Starttime *string `json:"starttime"`
+	Endtime   *string `json:"endtime"`
+	Word      string  `json:"word"`
 }

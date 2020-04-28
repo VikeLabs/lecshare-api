@@ -1,26 +1,11 @@
 type Transcription {
-    sections: [TranscriptionSection]
-}
-
-type TranscriptionSection {
-    alternatives: [TranscriptionParagraph]!
-    languageCode: String!
-}
-
-type TranscriptionParagraph {
-    transcript: String!
-    confidence: Float!
+    transcripts: [String]!
     words: [TranscriptionWord]!
 }
 
 type TranscriptionWord {
-    starttime: WordTime!
-    endtime: WordTime!
+    type: String! # Pronunciation or Punctuation
+    starttime: String # Punctuation has no start/end
+    endtime: String
     word: String!
-    confidence: Float!
-}
-
-type WordTime {
-    seconds: String
-    nanos: Int
 }

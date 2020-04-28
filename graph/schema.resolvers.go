@@ -33,11 +33,27 @@ func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture)
 
 	// fmt.Println("Downloaded", *transcriptionFile, numBytes, "bytes")
 
+	var transcriptionJSON model.TranscriptionJSON
 	var transcription model.Transcription
 
-	err = json.Unmarshal(buff.Bytes(), &transcription.Sections)
+	err = json.Unmarshal(buff.Bytes(), &transcriptionJSON)
 	if err != nil {
 		fmt.Println(err)
+	}
+
+	transcription.Transcripts = make([]*string, len(transcriptionJSON.Results.Transcripts))
+	transcription.Words = make([]*model.TranscriptionWord, len(transcriptionJSON.Results.Items))
+
+	for i, t := range transcriptionJSON.Results.Transcripts {
+		transcription.Transcripts[i] = t.Transcript
+	}
+	for i, v := range transcriptionJSON.Results.Items {
+		transcription.Words[i] = &model.TranscriptionWord{
+			Type:      v.Type,
+			Starttime: v.StartTime,
+			Endtime:   v.EndTime,
+			Word:      v.Alternatives[0].Content,
+		}
 	}
 
 	return &transcription, nil
