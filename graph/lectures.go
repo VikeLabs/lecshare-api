@@ -3,10 +3,12 @@ package graph
 import (
 	"context"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
@@ -20,19 +22,30 @@ func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLec
 	// parse out the subject, code, term, section for the objectkey.
 	subjectCode := strings.Split(courseKey, "#")
 	termSection := strings.Split(classKey, "#")
+
+	fmt.Println(subjectCode, termSection)
+
 	objectKey := strings.Join([]string{schoolKey, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", input.File.Filename}, "/")
 
 	// TODO input validation
 
+	ext := path.Ext(input.File.Filename)
+	outfile := input.File.Filename[0 : len(input.File.Filename)-len(ext)]
+
+	audioKey := strings.Join([]string{schoolKey, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", outfile + ".ogg"}, "/")
+	transcriptionKey := strings.Join([]string{schoolKey, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", outfile + ".json"}, "/")
+
 	// initialize blank lecture and populate
 	lecture := []model.Lecture{
-		model.Lecture{
+		{
 			Name:         input.Name,
 			Description:  input.Description,
 			DateCreated:  time.Now(),
 			DateModified: time.Now(),
-			ObjectKey:    &objectKey,
-			Audio:        aws.String(""),
+
+			ObjectKey:     &objectKey,
+			Audio:         &audioKey,
+			Transcription: &transcriptionKey,
 			// lecture specifics
 		},
 	}
@@ -57,7 +70,6 @@ func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLec
 	if err != nil {
 		return nil, fmt.Errorf("unable to upload file, please try again")
 	}
-
 	// TODO start transcription process. (async)
 	// TODO start audio encode process. (async)
 
@@ -68,9 +80,16 @@ func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLec
 func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
 	// converts slice types (slice of values to slice of ptrs)
 	// TODO sign with BunnyCDN pre-signed for security / CDN.
-
+	svc := s3.New(r.Session)
 	var lecturesRef []*model.Lecture
 	for i := 0; i < len(obj.Lectures); i++ {
+		key := *obj.Lectures[i].Audio
+		req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+			Bucket: r.BucketName,
+			Key:    &key,
+		})
+		presignedURL, _ := req.Presign(60 * time.Minute)
+		*obj.Lectures[i].Audio = presignedURL
 		lecturesRef = append(lecturesRef, &obj.Lectures[i])
 	}
 

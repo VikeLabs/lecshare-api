@@ -84,7 +84,7 @@ type Class {
 type Lecture {
     name: String
     description: String
-    audio: String
+    audio: String!
     duration: Int!
     transcription: Transcription!
     dateCreated: Time!

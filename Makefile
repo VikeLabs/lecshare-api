@@ -16,3 +16,6 @@ build: ## Build golang binaries
 	@for function in $(functions) ; do \
 		env GOOS=linux go build -ldflags="-s -w" -o bin/$$function functions/$$function/main.go ; \
 	done
+
+clean:
+	rm -r bin/ layer/

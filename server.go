@@ -15,6 +15,7 @@ import (
 	"github.com/guregu/dynamo"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
+	"github.com/vikelabs/lecshare-api/utils"
 )
 
 var (
@@ -45,7 +46,7 @@ func main() {
 
 	// define routes for development.
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", graph.Middleware(srv))
+	http.Handle("/query", utils.CorsMiddleware(srv))
 
 	// host on user defined port / default port.
 	log.Printf("connect to http://%s:%d/ for GraphQL playground", host, port)

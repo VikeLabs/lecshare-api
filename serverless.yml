@@ -17,7 +17,6 @@ custom:
     endpointType: regional
     securityPolicy: tls_1_2
     createRoute53Record: false
-
 provider:
   name: aws
   region: us-west-2 # oregon
@@ -108,7 +107,6 @@ functions:
         event: s3:ObjectCreated:*
         rules:
           - suffix: .json
-
 resources:
   Resources:
     LecshareTable:
@@ -126,17 +124,14 @@ resources:
           - AttributeName: SK
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-
 package:
   # configuration of the files required in this service.
   exclude:
     - ./**
   include:
     - ./bin/**
-
 plugins:
   - serverless-domain-manager
-
 layers:
   ffmpeg:
     path: layer
