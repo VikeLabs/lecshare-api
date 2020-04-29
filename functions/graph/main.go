@@ -21,7 +21,10 @@ var h *httpadapter.HandlerAdapter
 func lambdaHandler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// passes in the APIGatewayProxyRequest as a context.
 	// c, _ := core.GetAPIGatewayContextFromContext(ctx)
-	return h.ProxyWithContext(ctx, req)
+	res, err := h.ProxyWithContext(ctx, req)
+	res.Headers["Access-Control-Allow-Origin"] = "*"
+	res.Headers["Access-Control-Allow-Headers"] = "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent"
+	return res, err
 }
 
 func main() {
