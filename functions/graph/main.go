@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -47,6 +48,13 @@ func main() {
 			Validate:             validate,
 		},
 	}}))
+
+	var mb int64 = 1 << 20
+
+	srv.AddTransport(transport.MultipartForm{
+		MaxMemory:     32 * mb,
+		MaxUploadSize: 32 * mb,
+	})
 
 	h = httpadapter.New(srv)
 
