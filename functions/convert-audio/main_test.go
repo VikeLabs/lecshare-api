@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/vikelabs/lecshare-api/utils"
 )
 
 const testFile = "test_file"
@@ -33,17 +34,19 @@ func TestDownloadS3Object(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	downloadS3(testFile+".flac", testingBucket, file)
+	utils.DownloadS3(testFile+".flac", testingBucket, file)
+	file.Close()
 }
 
 func TestProbeAudio(t *testing.T) {
 	fileName := testFile + ".flac"
-	reader, err := os.Open(fileName)
+	file, err := os.Open(fileName)
 	if err != nil {
 		t.Error(err)
 	}
-	encoding, duration := probeAudio(reader)
+	encoding, duration := utils.ProbeAudio(file, "")
 	t.Log(encoding, "file is", strconv.Itoa(duration), "seconds.")
+	file.Close()
 }
 
 func TestEncodeAudio(t *testing.T) {
@@ -55,14 +58,17 @@ func TestEncodeAudio(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	encodeAudio(128, "flac", "opus", in, out)
+	utils.EncodeAudio(128, "flac", "opus", in, out, "")
+	in.Close()
+	out.Close()
 }
 
 func TestUploadS3Object(t *testing.T) {
 	key := testFile + "-compressed.ogg"
-	in, err := os.Open(key)
+	file, err := os.Open(key)
 	if err != nil {
 		t.Error(err)
 	}
-	uploadS3(key, testingBucket, "audio/ogg", in)
+	utils.UploadS3(key, testingBucket, "audio/ogg", file)
+	file.Close()
 }

@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"encoding/json"
@@ -49,13 +49,14 @@ func parseAudioTime(timeStr string) (time.Time, error) {
 	return time.Parse("15:04:05.000000", timeStr)
 }
 
-// Returns encoding, duration. Duration is in seconds.
-func probeAudio(reader io.Reader) (string, int) {
+// ProbeAudio returns the audio's codec and duration in seconds.
+// ffmpegDir is the directory that ffmpeg lives in, and can be left blank if ffmpeg is in your PATH
+func ProbeAudio(input io.Reader, ffmpegDir string) (string, int) {
 	// ffprobe -show_format -pretty -loglevel quiet -print_format json -show_packets pipe:
 	cmd := exec.Command(ffmpegDir+"ffprobe", "-show_format", "-pretty", "-loglevel", "quiet",
 		"-print_format", "json", "-show_packets", "pipe:")
 
-	cmd.Stdin = reader
+	cmd.Stdin = input
 
 	jsonBytes, err := cmd.Output()
 	if err != nil {
@@ -82,9 +83,9 @@ func probeAudio(reader io.Reader) (string, int) {
 	return jsonStruct.Format.FormatName, duration
 }
 
-// Bitrate is in kbps
-func encodeAudio(bitrate int, inCodec string, outCodec string, in io.Reader, out io.Writer) {
-	fmt.Println(">> Encoding", inCodec, " file")
+//EncodeAudio encodes audio from input to output. Bitrate is in kbps
+func EncodeAudio(bitrate int, inCodec string, outCodec string, input io.Reader, output io.Writer, ffmpegDir string) {
+	fmt.Println(">> Encoding", inCodec, "file")
 	encoders := map[string]string{
 		"opus": "libopus",
 		"mp3":  "libmp3lame",
@@ -95,8 +96,8 @@ func encodeAudio(bitrate int, inCodec string, outCodec string, in io.Reader, out
 
 	fmt.Println(">> Executing: " + strings.Join(cmd.Args, " "))
 
-	cmd.Stdin = in
-	cmd.Stdout = out
+	cmd.Stdin = input
+	cmd.Stdout = output
 	// cmd.Stderr = os.Stderr
 
 	// Wait for command to complete.

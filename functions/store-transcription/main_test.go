@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/base64"
 	"testing"
+
+	"github.com/vikelabs/lecshare-api/utils"
 )
 
 func TestCopyS3(t *testing.T) {
@@ -11,7 +13,7 @@ func TestCopyS3(t *testing.T) {
 	outKey := "test.json"
 	key := enc.EncodeToString([]byte("test")) + ".json"
 
-	copyS3(key, transcriptionBucket, outKey, testingBucket)
+	utils.CopyS3(key, transcriptionBucket, outKey, testingBucket)
 }
 
 func TestDeleteS3(t *testing.T) {
@@ -19,5 +21,5 @@ func TestDeleteS3(t *testing.T) {
 
 	key := enc.EncodeToString([]byte("test")) + ".json"
 
-	deleteS3(key, transcriptionBucket)
+	utils.DeleteS3(key, transcriptionBucket)
 }

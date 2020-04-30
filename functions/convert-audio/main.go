@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/transcribeservice"
+	"github.com/vikelabs/lecshare-api/utils"
 )
 
 var ffmpegDir string
@@ -36,7 +37,7 @@ func processAudio(key string, s3object events.S3Entity) {
 		log.Fatalln(err)
 	}
 
-	downloadS3(key, s3object.Bucket.Name, inFile)
+	utils.DownloadS3(key, s3object.Bucket.Name, inFile)
 
 	inFile.Close()
 	inFile, err = os.Open(key)
@@ -45,7 +46,7 @@ func processAudio(key string, s3object events.S3Entity) {
 	}
 
 	bitrate := 128
-	inCodec, duration := probeAudio(inFile)
+	inCodec, duration := utils.ProbeAudio(inFile, ffmpegDir)
 	fmt.Println(">> File is type", inCodec, "and length", duration, "seconds.")
 
 	//  Codec     ext
@@ -62,15 +63,15 @@ func processAudio(key string, s3object events.S3Entity) {
 		}
 		inFile.Seek(0, os.SEEK_SET)
 
-		encodeAudio(bitrate, inCodec, outCodec, inFile, outFile)
+		utils.EncodeAudio(bitrate, inCodec, outCodec, inFile, outFile, ffmpegDir)
 		outFile.Close()
 		outFile, err = os.Open(outKey)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		mime := strings.TrimLeft(extension, ".")
-		uploadS3(outKey, testingBucket, mime, outFile)
+		mime := "audio/" + strings.TrimLeft(extension, ".")
+		utils.UploadS3(outKey, testingBucket, mime, outFile)
 	}
 
 	fmt.Println("Transcribing", key)
