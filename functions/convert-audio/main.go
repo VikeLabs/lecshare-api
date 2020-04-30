@@ -59,15 +59,23 @@ func processAudio(key string, s3object events.S3Entity) {
 	}
 
 	for outCodec, extension := range finalCodecs {
-		outKey := strings.TrimSuffix(key, path.Ext(key)) + extension
-		outFile, err := os.Create(tmpDir + outKey)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		inFile.Seek(0, os.SEEK_SET)
+		var outKey string
+		var outFile *os.File
+		if inCodec == outCodec {
+			fmt.Printf(">> File is already %s, not encoding.\n", outCodec)
+			outKey = key
+		} else {
+			outKey := strings.TrimSuffix(key, path.Ext(key)) + extension
+			outFile, err = os.Create(tmpDir + outKey)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			inFile.Seek(0, os.SEEK_SET)
 
-		utils.EncodeAudio(bitrate, inCodec, outCodec, inFile, outFile, ffmpegDir)
-		outFile.Close()
+			utils.EncodeAudio(bitrate, inCodec, outCodec, inFile, outFile, ffmpegDir)
+			outFile.Close()
+		}
+
 		outFile, err = os.Open(tmpDir + outKey)
 		if err != nil {
 			log.Fatalln(err)
@@ -103,7 +111,7 @@ func transcribeAudio(key string, s3object events.S3Entity, codec string) {
 		fmt.Println(">> Transcribe session successfully created")
 	}
 
-	mediaformat := "flac"
+	mediaformat := codec
 	languagecode := "en-US"
 	var StrucMedia transcribeservice.Media
 	StrucMedia.MediaFileUri = &jobURI
