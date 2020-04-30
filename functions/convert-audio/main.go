@@ -29,7 +29,10 @@ func processAudio(key string, s3object events.S3Entity) {
 	//keyFile := path.Base(key)
 
 	if keyPath != "" {
-		os.MkdirAll(keyPath, 0644)
+		err := os.MkdirAll(tmpDir+keyPath, 0755)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	inFile, err := os.Create(tmpDir + key)
