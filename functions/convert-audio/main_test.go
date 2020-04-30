@@ -54,7 +54,7 @@ func TestEncodeAudio(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	out, err := os.Create(testFile + "-compressed.ogg")
+	out, err := os.Create(testFile + ".ogg")
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,7 +64,7 @@ func TestEncodeAudio(t *testing.T) {
 }
 
 func TestUploadS3Object(t *testing.T) {
-	key := testFile + "-compressed.ogg"
+	key := testFile + ".ogg"
 	file, err := os.Open(key)
 	if err != nil {
 		t.Error(err)

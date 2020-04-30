@@ -19,7 +19,7 @@ import (
 )
 
 var ffmpegDir string
-var writeDir string
+var tmpDir string
 
 const testingBucket = "assets-lecshare.oimo.ca"
 const transcriptionBucket = "lecshare-transcriptions"
@@ -32,7 +32,7 @@ func processAudio(key string, s3object events.S3Entity) {
 		os.MkdirAll(keyPath, 0644)
 	}
 
-	inFile, err := os.Create(key)
+	inFile, err := os.Create(tmpDir + key)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -40,7 +40,7 @@ func processAudio(key string, s3object events.S3Entity) {
 	utils.DownloadS3(key, s3object.Bucket.Name, inFile)
 
 	inFile.Close()
-	inFile, err = os.Open(key)
+	inFile, err = os.Open(tmpDir + key)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -56,8 +56,8 @@ func processAudio(key string, s3object events.S3Entity) {
 	}
 
 	for outCodec, extension := range finalCodecs {
-		outKey := strings.TrimSuffix(key, path.Ext(key)) + "-compressed" + extension
-		outFile, err := os.Create(outKey)
+		outKey := strings.TrimSuffix(key, path.Ext(key)) + extension
+		outFile, err := os.Create(tmpDir + outKey)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -65,7 +65,7 @@ func processAudio(key string, s3object events.S3Entity) {
 
 		utils.EncodeAudio(bitrate, inCodec, outCodec, inFile, outFile, ffmpegDir)
 		outFile.Close()
-		outFile, err = os.Open(outKey)
+		outFile, err = os.Open(tmpDir + outKey)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -137,7 +137,7 @@ func newAudioHandler(ctx context.Context, event events.S3Event) error {
 func init() {
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
 		ffmpegDir = "/opt/ffmpeg/"
-		writeDir = "/tmp/"
+		tmpDir = "/tmp/"
 	}
 }
 

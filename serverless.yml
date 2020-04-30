@@ -2,7 +2,7 @@ service: lecshare-api
 
 custom:
   generalBucket: assets-lecshare.oimo.ca
-  audioBucket: lecshare-api-audio
+  processingBucket: lecshare-audio-processing
   transcriptionBucket: lecshare-transcriptions
   # try to use the argument, then the provider stage
   stage: ${opt:stage, self:provider.stage}
@@ -26,6 +26,7 @@ provider:
   environment:
     tableName: ${self:custom.tableName}
     bucketName: ${self:custom.generalBucket}
+    processingBucketName: ${self:custom.processingBucket}
   iamRoleStatements:
   - Effect: Allow
     Action:
@@ -49,7 +50,7 @@ provider:
     Action:
       - s3:GetObject
       - s3:PutObject
-    Resource: "arn:aws:s3:::${self:custom.audioBucket}/*"
+    Resource: "arn:aws:s3:::${self:custom.processingBucket}/*"
   - Effect: Allow
     Action:
       - s3:GetObject
@@ -87,25 +88,19 @@ functions:
     memorySize: 1024
     events:
       - s3:
-        #bucket: ${self:custom.audioBucket}
-        # Use general bucket for now
-        bucket: ${self:custom.generalBucket}
+        bucket: ${self:custom.processingBucket}
         existing: true
         event: s3:ObjectCreated:*
         rules:
           - suffix: .flac
       - s3:
-        #bucket: ${self:custom.audioBucket}
-        # Use general bucket for now
-        bucket: ${self:custom.generalBucket}
+        bucket: ${self:custom.processingBucket}
         existing: true
         event: s3:ObjectCreated:*
         rules:
           - suffix: .mp3
       - s3:
-        #bucket: ${self:custom.audioBucket}
-        # Use general bucket for now
-        bucket: ${self:custom.generalBucket}
+        bucket: ${self:custom.processingBucket}
         existing: true
         event: s3:ObjectCreated:*
         rules:

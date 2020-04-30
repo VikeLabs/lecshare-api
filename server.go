@@ -32,16 +32,18 @@ func main() {
 	db := dynamo.New(session)
 
 	bucketName := os.Getenv("bucketName")
+	processingBucketName := os.Getenv("processingBucketName")
 	tableName := os.Getenv("tableName")
 
 	validate := validator.New()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		Session:    session,
-		DB:         db,
-		TableName:  &tableName,
-		BucketName: &bucketName,
-		Validate:   validate,
+		Session:              session,
+		DB:                   db,
+		TableName:            &tableName,
+		BucketName:           &bucketName,
+		ProcessingBucketName: &processingBucketName,
+		Validate:             validate,
 	}}))
 
 	// define routes for development.

@@ -10,9 +10,10 @@ import (
 )
 
 type Resolver struct {
-	Session    *session.Session
-	DB         *dynamo.DB
-	BucketName *string
-	TableName  *string
-	Validate   *validator.Validate
+	Session              *session.Session
+	DB                   *dynamo.DB
+	ProcessingBucketName *string
+	BucketName           *string
+	TableName            *string
+	Validate             *validator.Validate
 }

@@ -61,7 +61,7 @@ func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLec
 	// TODO change this to be async.
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		// TODO remove the hardcorded value
-		Bucket: r.BucketName,
+		Bucket: r.ProcessingBucketName,
 		Key:    aws.String(objectKey),
 		// as we pass in an io.Reader, it will be a stream uploaded (w00t)
 		Body: input.File.File,
