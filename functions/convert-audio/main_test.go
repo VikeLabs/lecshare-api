@@ -9,13 +9,18 @@ import (
 	"github.com/vikelabs/lecshare-api/utils"
 )
 
-const testFile = "test_file"
+// HACK This file is a mess right now, please make sure that each test uses proper values.
+
+// const testFile = "test_file"
+// const testFile = "VIKELABS/VIKE/001/202001/A00/lectures/ECON416_TEST.mp3"
+const testFile = "test12345/test123456.flac"
 
 // The big test
 func TestProcessAudio(t *testing.T) {
-	k := testFile + ".flac"
+	// k := testFile + ".flac"
+	k := testFile
 	var s events.S3Entity
-	s.Bucket.Name = testingBucket
+	s.Bucket.Name = processingBucket
 	s.Object.Key = k
 	processAudio(k, s)
 }
@@ -24,17 +29,19 @@ func TestTranscribeAudio(t *testing.T) {
 	// Will fail if you use the same job name repeatedly
 	k := testFile + ".flac"
 	var s events.S3Entity
-	s.Bucket.Name = testingBucket
+	s.Bucket.Name = processingBucket
 	s.Object.Key = k
 	transcribeAudio(k, s, "flac")
 }
 
 func TestDownloadS3Object(t *testing.T) {
-	file, err := os.Create(testFile + ".flac")
+	// file, err := os.Create(testFile + ".flac")
+	file, err := os.Create(testFile)
 	if err != nil {
 		t.Error(err)
 	}
-	utils.DownloadS3(testFile+".flac", testingBucket, file)
+	utils.DownloadS3(testFile, processingBucket, file)
+	// utils.DownloadS3(testFile+".flac", testingBucket, file)
 	file.Close()
 }
 

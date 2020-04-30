@@ -22,6 +22,7 @@ var ffmpegDir string
 var tmpDir string
 
 const testingBucket = "assets-lecshare.oimo.ca"
+const processingBucket = "lecshare-audio-processing"
 const transcriptionBucket = "lecshare-transcriptions"
 
 func processAudio(key string, s3object events.S3Entity) {
@@ -31,13 +32,13 @@ func processAudio(key string, s3object events.S3Entity) {
 	if keyPath != "" {
 		err := os.MkdirAll(tmpDir+keyPath, 0755)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln("Error making directory", tmpDir+keyPath, "\n", err)
 		}
 	}
 
 	inFile, err := os.Create(tmpDir + key)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error creating", tmpDir+key, "\n", err)
 	}
 
 	utils.DownloadS3(key, s3object.Bucket.Name, inFile)
@@ -45,7 +46,7 @@ func processAudio(key string, s3object events.S3Entity) {
 	inFile.Close()
 	inFile, err = os.Open(tmpDir + key)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error opening", tmpDir+key, "\n", err)
 	}
 
 	bitrate := 128
@@ -65,10 +66,10 @@ func processAudio(key string, s3object events.S3Entity) {
 			fmt.Printf(">> File is already %s, not encoding.\n", outCodec)
 			outKey = key
 		} else {
-			outKey := strings.TrimSuffix(key, path.Ext(key)) + extension
+			outKey = strings.TrimSuffix(key, path.Ext(key)) + extension
 			outFile, err = os.Create(tmpDir + outKey)
 			if err != nil {
-				log.Fatalln(err)
+				log.Fatalln("Error creating", tmpDir+outKey, "\n", err)
 			}
 			inFile.Seek(0, os.SEEK_SET)
 
@@ -78,7 +79,7 @@ func processAudio(key string, s3object events.S3Entity) {
 
 		outFile, err = os.Open(tmpDir + outKey)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalln("Error opening", tmpDir+outKey, "\n", err)
 		}
 
 		mime := "audio/" + strings.TrimLeft(extension, ".")

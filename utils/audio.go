@@ -85,7 +85,7 @@ func ProbeAudio(input io.Reader, ffmpegDir string) (string, int) {
 
 //EncodeAudio encodes audio from input to output. Bitrate is in kbps
 func EncodeAudio(bitrate int, inCodec string, outCodec string, input io.Reader, output io.Writer, ffmpegDir string) {
-	fmt.Println(">> Encoding", inCodec, "file")
+	fmt.Println(">> Encoding", inCodec, "file to", outCodec)
 	encoders := map[string]string{
 		"opus": "libopus",
 		"mp3":  "libmp3lame",
@@ -106,6 +106,6 @@ func EncodeAudio(bitrate int, inCodec string, outCodec string, input io.Reader, 
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println(">> Processed file.")
+	fmt.Println(">> Encoded file.")
 	return
 }
