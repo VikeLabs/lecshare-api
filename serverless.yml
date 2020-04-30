@@ -94,6 +94,22 @@ functions:
         event: s3:ObjectCreated:*
         rules:
           - suffix: .flac
+      - s3:
+        #bucket: ${self:custom.audioBucket}
+        # Use general bucket for now
+        bucket: ${self:custom.generalBucket}
+        existing: true
+        event: s3:ObjectCreated:*
+        rules:
+          - suffix: .mp3
+      - s3:
+        #bucket: ${self:custom.audioBucket}
+        # Use general bucket for now
+        bucket: ${self:custom.generalBucket}
+        existing: true
+        event: s3:ObjectCreated:*
+        rules:
+          - suffix: .ogg
     layers:
       - {Ref: FfmpegLambdaLayer}
   store-transcription:
