@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -53,14 +54,15 @@ func parseAudioTime(timeStr string) (time.Time, error) {
 // ffmpegDir is the directory that ffmpeg lives in, and can be left blank if ffmpeg is in your PATH
 func ProbeAudio(input io.Reader, ffmpegDir string) (string, int) {
 	// ffprobe -show_format -pretty -loglevel quiet -print_format json -show_packets pipe:
-	cmd := exec.Command(ffmpegDir+"ffprobe", "-show_format", "-pretty", "-loglevel", "quiet",
+	cmd := exec.Command(ffmpegDir+"ffprobe", "-show_format", "-pretty",
 		"-print_format", "json", "-show_packets", "pipe:")
 
 	cmd.Stdin = input
+	cmd.Stderr = os.Stderr
 
 	jsonBytes, err := cmd.Output()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error with probeAudio:", err, "\nCommand:", strings.Join(cmd.Args, " "), "\nOutput:", string(jsonBytes))
 	}
 
 	var jsonStruct FFProbeJSON
