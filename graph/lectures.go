@@ -13,9 +13,10 @@ import (
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
-func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
+// CreateLecture creates a new lecture instance within a class.
+func (r *Repository) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
 	// setup
-	db := r.DB
+	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 	uploader := s3manager.NewUploader(r.Session)
 
@@ -77,21 +78,27 @@ func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLec
 	return &lecture[0], nil
 }
 
-func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
+func (r *Repository) ListAllLectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
 	// converts slice types (slice of values to slice of ptrs)
 	// TODO sign with BunnyCDN pre-signed for security / CDN.
-	svc := s3.New(r.Session)
-	var lecturesRef []*model.Lecture
-	for i := 0; i < len(obj.Lectures); i++ {
-		key := *obj.Lectures[i].Audio
-		req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-			Bucket: r.BucketName,
-			Key:    &key,
-		})
-		presignedURL, _ := req.Presign(60 * time.Minute)
-		*obj.Lectures[i].Audio = presignedURL
-		lecturesRef = append(lecturesRef, &obj.Lectures[i])
-	}
+	fmt.Println(obj)
+	fmt.Println(len(obj.Lectures))
+	if len(obj.Lectures) > 0 {
 
-	return lecturesRef, nil
+		svc := s3.New(r.Session)
+		var lecturesRef []*model.Lecture
+		for i := 0; i < len(obj.Lectures); i++ {
+			key := obj.Lectures[i].Audio
+			req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+				Bucket: r.AssetsBucketName,
+				Key:    key,
+			})
+			presignedURL, _ := req.Presign(60 * time.Minute)
+			obj.Lectures[i].Audio = &presignedURL
+			lecturesRef = append(lecturesRef, &obj.Lectures[i])
+		}
+
+		return lecturesRef, nil
+	}
+	return nil, nil
 }

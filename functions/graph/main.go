@@ -38,12 +38,14 @@ func main() {
 	validate := validator.New()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		Session:              session,
-		DB:                   db,
-		TableName:            &tableName,
-		BucketName:           &bucketName,
-		ProcessingBucketName: &processingBucketName,
-		Validate:             validate,
+		Repository: graph.Repository{
+			DynamoDB:             db,
+			TableName:            &tableName,
+			Session:              session,
+			AssetsBucketName:     &bucketName,
+			ProcessingBucketName: &processingBucketName,
+			Validate:             validate,
+		},
 	}}))
 
 	h = httpadapter.New(srv)

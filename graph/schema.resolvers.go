@@ -5,58 +5,45 @@ package graph
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
+func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
+	return r.Repository.ListAllLectures(ctx, obj)
+}
+
+func (r *courseResolver) Classes(ctx context.Context, obj *model.Course) ([]*model.Class, error) {
+	return r.Repository.ListAllClasses(ctx, obj)
+}
+
 func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture) (*model.Transcription, error) {
-	// when it retrieves the file, it stores it in memory (this buffer below) rather than on disk.
-	buff := &aws.WriteAtBuffer{}
+	return r.Repository.GetTranscription(ctx, obj)
+}
 
-	downloader := s3manager.NewDownloader(r.Session)
-	_, err := downloader.Download(buff,
-		&s3.GetObjectInput{
-			Bucket: r.BucketName,
-			Key:    obj.Transcription,
-		})
+func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error) {
+	return r.Repository.CreateSchool(ctx, input)
+}
 
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
+func (r *mutationResolver) CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error) {
+	return r.Repository.CreateCourse(ctx, input, schoolKey)
+}
 
-	// fmt.Println("Downloaded", *transcriptionFile, numBytes, "bytes")
+func (r *mutationResolver) CreateClass(ctx context.Context, input model.NewClass, schoolKey string, courseKey string) (*model.Class, error) {
+	return r.Repository.CreateClass(ctx, input, schoolKey, courseKey)
+}
 
-	var transcriptionJSON model.TranscriptionJSON
-	var transcription model.Transcription
+func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
+	return r.Repository.CreateLecture(ctx, input, schoolKey, courseKey, classKey)
+}
 
-	err = json.Unmarshal(buff.Bytes(), &transcriptionJSON)
-	if err != nil {
-		fmt.Println(err)
-	}
+func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {
+	return r.Repository.ListAllSchools(ctx, code)
+}
 
-	transcription.Transcripts = make([]*string, len(transcriptionJSON.Results.Transcripts))
-	transcription.Words = make([]*model.TranscriptionWord, len(transcriptionJSON.Results.Items))
-
-	for i, t := range transcriptionJSON.Results.Transcripts {
-		transcription.Transcripts[i] = t.Transcript
-	}
-	for i, v := range transcriptionJSON.Results.Items {
-		transcription.Words[i] = &model.TranscriptionWord{
-			Type:      v.Type,
-			Starttime: v.StartTime,
-			Endtime:   v.EndTime,
-			Word:      v.Alternatives[0].Content,
-		}
-	}
-
-	return &transcription, nil
+func (r *schoolResolver) Courses(ctx context.Context, obj *model.School) ([]*model.Course, error) {
+	return r.Repository.ListAllCourses(ctx, obj)
 }
 
 // Class returns generated.ClassResolver implementation.

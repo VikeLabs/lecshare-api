@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/guregu/dynamo"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
-func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error) {
-	// TODO get session from ctx
-	db := r.DB
+// CreateSchool creates a new "School" entry in DynamoDB
+func (r *Repository) CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error) {
+	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	// input validation
@@ -48,9 +48,10 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewScho
 	return &school, nil
 }
 
-func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {
+// ListAllSchools lists all schools within the table.
+func (r *Repository) ListAllSchools(ctx context.Context, code *string) ([]*model.School, error) {
 	// note: the same table is used used accross the entire base application.
-	db := r.DB
+	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	// we can only unmarshal data into a slice (not a ptr slice).

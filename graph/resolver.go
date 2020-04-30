@@ -3,17 +3,7 @@
 // It serves as dependency injection for your app, add any dependencies you require here.
 package graph
 
-import (
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/go-playground/validator/v10"
-	"github.com/guregu/dynamo"
-)
-
+// Resolver connects to various required dependencies to resolve
 type Resolver struct {
-	Session              *session.Session
-	DB                   *dynamo.DB
-	ProcessingBucketName *string
-	BucketName           *string
-	TableName            *string
-	Validate             *validator.Validate
+	Repository Repository
 }

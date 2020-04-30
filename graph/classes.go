@@ -10,9 +10,31 @@ import (
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
-func (r *mutationResolver) CreateClass(ctx context.Context, input model.NewClass, schoolKey string, courseKey string) (*model.Class, error) {
+// ListAllClasses lists all classes.
+func (r *Repository) ListAllClasses(ctx context.Context, obj *model.Course) ([]*model.Class, error) {
+	// setup
+	db := r.DynamoDB
+	table := db.Table(*r.TableName)
+
+	var classes []model.Class
+	var classesRef []*model.Class
+
+	table.Get("PK", obj.PK+"#"+obj.SK).All(&classes)
+
+	if len(classes) != 0 {
+		for i := 0; i < len(classes); i++ {
+			classesRef = append(classesRef, &classes[i])
+		}
+
+		return classesRef, nil
+	}
+	return nil, nil
+}
+
+// CreateClass creates a new instance of a class from a course in the database.
+func (r *Repository) CreateClass(ctx context.Context, input model.NewClass, schoolKey string, courseKey string) (*model.Class, error) {
 	// setup DynamoDB
-	db := r.DB
+	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	// TODO validate schoolKey, courseKey
@@ -45,22 +67,4 @@ func (r *mutationResolver) CreateClass(ctx context.Context, input model.NewClass
 
 	}
 	return &class, nil
-}
-
-func (r *courseResolver) Classes(ctx context.Context, obj *model.Course) ([]*model.Class, error) {
-	// setup
-	db := r.DB
-	table := db.Table(*r.TableName)
-
-	var classes []model.Class
-	var classesRef []*model.Class
-
-	table.Get("PK", obj.PK+"#"+obj.SK).All(&classes)
-
-	// convert to slice of pointers.
-	for i := 0; i < len(classes); i++ {
-		classesRef = append(classesRef, &classes[i])
-	}
-
-	return classesRef, nil
 }

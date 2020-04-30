@@ -640,7 +640,7 @@ type Class {
 type Lecture {
     name: String
     description: String
-    audio: String
+    audio: String!
     duration: Int!
     transcription: Transcription!
     dateCreated: Time!
@@ -1557,11 +1557,14 @@ func (ec *executionContext) _Lecture_audio(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Lecture_duration(ctx context.Context, field graphql.CollectedField, obj *model.Lecture) (ret graphql.Marshaler) {
@@ -3786,6 +3789,9 @@ func (ec *executionContext) _Lecture(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Lecture_description(ctx, field, obj)
 		case "audio":
 			out.Values[i] = ec._Lecture_audio(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "duration":
 			out.Values[i] = ec._Lecture_duration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4578,6 +4584,24 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNString2string(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalNString2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec.marshalNString2string(ctx, sel, *v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {

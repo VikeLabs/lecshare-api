@@ -31,19 +31,23 @@ func main() {
 	session := session.New(&aws.Config{Region: aws.String("us-west-2")})
 	db := dynamo.New(session)
 
+	// Preparation for resolvers.
 	bucketName := os.Getenv("bucketName")
 	processingBucketName := os.Getenv("processingBucketName")
 	tableName := os.Getenv("tableName")
 
 	validate := validator.New()
 
+	// Initialize GraphQL resolvers
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		Session:              session,
-		DB:                   db,
-		TableName:            &tableName,
-		BucketName:           &bucketName,
-		ProcessingBucketName: &processingBucketName,
-		Validate:             validate,
+		Repository: graph.Repository{
+			DynamoDB:             db,
+			TableName:            &tableName,
+			Session:              session,
+			AssetsBucketName:     &bucketName,
+			ProcessingBucketName: &processingBucketName,
+			Validate:             validate,
+		},
 	}}))
 
 	// define routes for development.

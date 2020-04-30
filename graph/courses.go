@@ -7,9 +7,10 @@ import (
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
-func (r *mutationResolver) CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error) {
+// CreateCourse creates a new course entity in the database.
+func (r *Repository) CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error) {
 	// setup DynamoDB
-	db := r.DB
+	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	// TODO validate schoolKey
@@ -32,8 +33,9 @@ func (r *mutationResolver) CreateCourse(ctx context.Context, input model.NewCour
 	return &course, nil
 }
 
-func (r *schoolResolver) Courses(ctx context.Context, obj *model.School) ([]*model.Course, error) {
-	db := r.DB
+// ListAllCourses lists all courses.
+func (r *Repository) ListAllCourses(ctx context.Context, obj *model.School) ([]*model.Course, error) {
+	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	var courses []model.Course
@@ -45,6 +47,5 @@ func (r *schoolResolver) Courses(ctx context.Context, obj *model.School) ([]*mod
 	for i := 0; i < len(courses); i++ {
 		coursesRef = append(coursesRef, &courses[i])
 	}
-
 	return coursesRef, nil
 }
