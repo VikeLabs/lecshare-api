@@ -100,13 +100,13 @@ func EncodeAudio(bitrate int, inCodec string, outCodec string, input io.Reader, 
 
 	cmd.Stdin = input
 	cmd.Stdout = output
-	// cmd.Stderr = os.Stderr
+	cmd.Stderr = os.Stderr
 
 	// Wait for command to complete.
 	err := cmd.Run()
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error with encodeAudio:", err)
 	}
 	fmt.Println(">> Encoded file.")
 	return

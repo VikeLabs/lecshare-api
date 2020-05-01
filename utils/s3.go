@@ -29,7 +29,7 @@ func DownloadS3(key string, bucket string, output io.Writer) {
 			Key:    aws.String(key),
 		})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error downloading", key, "from", bucket, "\nError:", err)
 	}
 
 	output.Write(buff.Bytes())
@@ -42,6 +42,9 @@ func UploadS3(key string, bucket string, mime string, input io.Reader) {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2")},
 	)
+	if err != nil {
+		log.Fatalln("Error getting session:", err)
+	}
 
 	uploader := s3manager.NewUploader(sess)
 
@@ -57,7 +60,7 @@ func UploadS3(key string, bucket string, mime string, input io.Reader) {
 		// }),
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln("Error uploading", key, "to", bucket, "\nError:", err)
 	}
 	fmt.Println(">> Uploaded", key)
 }
@@ -68,7 +71,7 @@ func CopyS3(srcKey string, srcBucket string, dstKey string, dstBucket string) {
 		Region: aws.String("us-west-2"),
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error getting session:", err)
 	}
 
 	svc := s3.New(sess)
@@ -79,7 +82,7 @@ func CopyS3(srcKey string, srcBucket string, dstKey string, dstBucket string) {
 		CopySource: aws.String(srcBucket + "/" + url.QueryEscape(srcKey)),
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error while copying", srcKey, "in", srcBucket, "to", dstKey, "in", dstBucket, "\nError:", err)
 	}
 
 	err = svc.WaitUntilObjectExists(&s3.HeadObjectInput{
@@ -87,7 +90,7 @@ func CopyS3(srcKey string, srcBucket string, dstKey string, dstBucket string) {
 		Key:    aws.String(dstKey),
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error while waiting for", dstKey, "in", dstBucket, "to exist.", "\nError:", err)
 	}
 
 	fmt.Println(">> Copied", dstKey, "to", dstBucket)
@@ -100,7 +103,7 @@ func DeleteS3(key string, bucket string) {
 		Region: aws.String("us-west-2"),
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error getting session:", err)
 	}
 
 	svc := s3.New(sess)
@@ -110,7 +113,7 @@ func DeleteS3(key string, bucket string) {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error while deleting", key, "from", bucket, "\nError:", err)
 	}
 
 	err = svc.WaitUntilObjectNotExists(&s3.HeadObjectInput{
@@ -118,7 +121,7 @@ func DeleteS3(key string, bucket string) {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error while waiting for", key, "in", bucket, "to not exist", "\nError:", err)
 	}
 
 	fmt.Println(">> Deleted", key, "from", bucket)
