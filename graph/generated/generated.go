@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 		Instructors  func(childComplexity int) int
 		Lectures     func(childComplexity int) int
 		Name         func(childComplexity int) int
+		Resources    func(childComplexity int, dateBefore *time.Time, dateAfter *time.Time) int
 		Section      func(childComplexity int) int
 		Subject      func(childComplexity int) int
 		Term         func(childComplexity int) int
@@ -87,14 +88,28 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateClass   func(childComplexity int, input model.NewClass, schoolKey string, courseKey string) int
-		CreateCourse  func(childComplexity int, input model.NewCourse, schoolKey string) int
-		CreateLecture func(childComplexity int, input model.NewLecture, schoolKey string, courseKey string, classKey string) int
-		CreateSchool  func(childComplexity int, input model.NewSchool) int
+		CreateClass    func(childComplexity int, input model.NewClass, schoolKey string, courseKey string) int
+		CreateCourse   func(childComplexity int, input model.NewCourse, schoolKey string) int
+		CreateLecture  func(childComplexity int, input model.NewLecture, schoolKey string, courseKey string, classKey string) int
+		CreateResource func(childComplexity int, input model.NewResource, schoolKey string, courseKey string, classKey string) int
+		CreateSchool   func(childComplexity int, input model.NewSchool) int
+		ImportCourse   func(childComplexity int, schoolKey string, courseKey string, term string) int
+		UpdateResource func(childComplexity int, input model.UpdateResource, schoolKey string, courseKey string, classKey string, resourceKey string) int
 	}
 
 	Query struct {
 		Schools func(childComplexity int, code *string) int
+	}
+
+	Resource struct {
+		DateCreated  func(childComplexity int) int
+		DateModified func(childComplexity int) int
+		Description  func(childComplexity int) int
+		Name         func(childComplexity int) int
+		ObjectKey    func(childComplexity int) int
+		Published    func(childComplexity int) int
+		Size         func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	School struct {
@@ -122,6 +137,7 @@ type ComplexityRoot struct {
 
 type ClassResolver interface {
 	Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error)
+	Resources(ctx context.Context, obj *model.Class, dateBefore *time.Time, dateAfter *time.Time) ([]*model.Resource, error)
 }
 type CourseResolver interface {
 	Classes(ctx context.Context, obj *model.Course) ([]*model.Class, error)
@@ -132,8 +148,11 @@ type LectureResolver interface {
 type MutationResolver interface {
 	CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error)
 	CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error)
+	ImportCourse(ctx context.Context, schoolKey string, courseKey string, term string) (*model.Course, error)
 	CreateClass(ctx context.Context, input model.NewClass, schoolKey string, courseKey string) (*model.Class, error)
 	CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error)
+	CreateResource(ctx context.Context, input model.NewResource, schoolKey string, courseKey string, classKey string) (*model.Resource, error)
+	UpdateResource(ctx context.Context, input model.UpdateResource, schoolKey string, courseKey string, classKey string, resourceKey string) (*model.Resource, error)
 }
 type QueryResolver interface {
 	Schools(ctx context.Context, code *string) ([]*model.School, error)
@@ -198,6 +217,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Class.Name(childComplexity), true
+
+	case "Class.resources":
+		if e.complexity.Class.Resources == nil {
+			break
+		}
+
+		args, err := ec.field_Class_resources_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Class.Resources(childComplexity, args["dateBefore"].(*time.Time), args["dateAfter"].(*time.Time)), true
 
 	case "Class.section":
 		if e.complexity.Class.Section == nil {
@@ -375,6 +406,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateLecture(childComplexity, args["input"].(model.NewLecture), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string)), true
 
+	case "Mutation.createResource":
+		if e.complexity.Mutation.CreateResource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createResource_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateResource(childComplexity, args["input"].(model.NewResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string)), true
+
 	case "Mutation.createSchool":
 		if e.complexity.Mutation.CreateSchool == nil {
 			break
@@ -387,6 +430,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateSchool(childComplexity, args["input"].(model.NewSchool)), true
 
+	case "Mutation.importCourse":
+		if e.complexity.Mutation.ImportCourse == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_importCourse_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ImportCourse(childComplexity, args["schoolKey"].(string), args["courseKey"].(string), args["term"].(string)), true
+
+	case "Mutation.updateResource":
+		if e.complexity.Mutation.UpdateResource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateResource_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateResource(childComplexity, args["input"].(model.UpdateResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string), args["resourceKey"].(string)), true
+
 	case "Query.schools":
 		if e.complexity.Query.Schools == nil {
 			break
@@ -398,6 +465,62 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Schools(childComplexity, args["code"].(*string)), true
+
+	case "Resource.dateCreated":
+		if e.complexity.Resource.DateCreated == nil {
+			break
+		}
+
+		return e.complexity.Resource.DateCreated(childComplexity), true
+
+	case "Resource.dateModified":
+		if e.complexity.Resource.DateModified == nil {
+			break
+		}
+
+		return e.complexity.Resource.DateModified(childComplexity), true
+
+	case "Resource.description":
+		if e.complexity.Resource.Description == nil {
+			break
+		}
+
+		return e.complexity.Resource.Description(childComplexity), true
+
+	case "Resource.name":
+		if e.complexity.Resource.Name == nil {
+			break
+		}
+
+		return e.complexity.Resource.Name(childComplexity), true
+
+	case "Resource.objectKey":
+		if e.complexity.Resource.ObjectKey == nil {
+			break
+		}
+
+		return e.complexity.Resource.ObjectKey(childComplexity), true
+
+	case "Resource.published":
+		if e.complexity.Resource.Published == nil {
+			break
+		}
+
+		return e.complexity.Resource.Published(childComplexity), true
+
+	case "Resource.size":
+		if e.complexity.Resource.Size == nil {
+			break
+		}
+
+		return e.complexity.Resource.Size(childComplexity), true
+
+	case "Resource.type":
+		if e.complexity.Resource.Type == nil {
+			break
+		}
+
+		return e.complexity.Resource.Type(childComplexity), true
 
 	case "School.code":
 		if e.complexity.School.Code == nil {
@@ -568,11 +691,20 @@ type Query {
 
 type Mutation {
     createSchool(input: NewSchool!): School!
-    createCourse(input: NewCourse! schoolKey: String!): Course!
+
+    createCourse(input: NewCourse! schoolKey: String!): Course!    
+    importCourse(schoolKey: String! courseKey: String! term: String!): Course!
+
     createClass(input: NewClass! schoolKey: String! courseKey: String!): Class!
 
     # mutation below contains file uploading.
     createLecture(input: NewLecture! schoolKey: String! courseKey: String! classKey: String!): Lecture!
+    # resources
+    createResource(input: NewResource! schoolKey: String! courseKey: String! classKey: String!): Resource!
+    updateResource(input: UpdateResource! schoolKey: String! courseKey: String! classKey: String! resourceKey: String!): Resource!
+
+
+
 }
 
 # Creates a new school.
@@ -606,6 +738,21 @@ input NewLecture {
     description: String
 }
 
+input NewResource {
+    file: Upload
+    date: Time # if not provided, will automatically fill out.
+    name: String
+    description: String
+}
+
+input UpdateResource {
+    file: Upload
+    date: Time # if not provided, will automatically fill out.
+    name: String
+    description: String
+    published: Boolean
+}
+
 type School {
     name: String!
     code: String!
@@ -633,6 +780,7 @@ type Class {
     section: String!
     instructors: [Instructor]! 
     lectures: [Lecture]
+    resources(dateBefore: Time, dateAfter: Time): [Resource]
     dateCreated: Time!
     dateModified: Time!
 }
@@ -643,6 +791,17 @@ type Lecture {
     audio: String!
     duration: Int!
     transcription: Transcription!
+    dateCreated: Time!
+    dateModified: Time!
+}
+
+type Resource {
+    name: String
+    description: String
+    objectKey: String!
+    type: String!
+    size: Int!
+    published: Boolean
     dateCreated: Time!
     dateModified: Time!
 }
@@ -671,6 +830,28 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Class_resources_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *time.Time
+	if tmp, ok := rawArgs["dateBefore"]; ok {
+		arg0, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["dateBefore"] = arg0
+	var arg1 *time.Time
+	if tmp, ok := rawArgs["dateAfter"]; ok {
+		arg1, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["dateAfter"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createClass_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -762,6 +943,44 @@ func (ec *executionContext) field_Mutation_createLecture_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewResource
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNNewResource2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐNewResource(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["schoolKey"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schoolKey"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["courseKey"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["courseKey"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["classKey"]; ok {
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["classKey"] = arg3
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createSchool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -773,6 +992,82 @@ func (ec *executionContext) field_Mutation_createSchool_args(ctx context.Context
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_importCourse_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["schoolKey"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schoolKey"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["courseKey"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["courseKey"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["term"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["term"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateResource_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateResource
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalNUpdateResource2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐUpdateResource(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["schoolKey"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schoolKey"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["courseKey"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["courseKey"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["classKey"]; ok {
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["classKey"] = arg3
+	var arg4 string
+	if tmp, ok := rawArgs["resourceKey"]; ok {
+		arg4, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["resourceKey"] = arg4
 	return args, nil
 }
 
@@ -1073,6 +1368,44 @@ func (ec *executionContext) _Class_lectures(ctx context.Context, field graphql.C
 	res := resTmp.([]*model.Lecture)
 	fc.Result = res
 	return ec.marshalOLecture2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Class_resources(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Class",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Class_resources_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Class().Resources(rctx, obj, args["dateBefore"].(*time.Time), args["dateAfter"].(*time.Time))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Resource)
+	fc.Result = res
+	return ec.marshalOResource2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Class_dateCreated(ctx context.Context, field graphql.CollectedField, obj *model.Class) (ret graphql.Marshaler) {
@@ -1785,6 +2118,47 @@ func (ec *executionContext) _Mutation_createCourse(ctx context.Context, field gr
 	return ec.marshalNCourse2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐCourse(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_importCourse(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_importCourse_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ImportCourse(rctx, args["schoolKey"].(string), args["courseKey"].(string), args["term"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Course)
+	fc.Result = res
+	return ec.marshalNCourse2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐCourse(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createClass(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1865,6 +2239,88 @@ func (ec *executionContext) _Mutation_createLecture(ctx context.Context, field g
 	res := resTmp.(*model.Lecture)
 	fc.Result = res
 	return ec.marshalNLecture2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createResource(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createResource_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateResource(rctx, args["input"].(model.NewResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Resource)
+	fc.Result = res
+	return ec.marshalNResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateResource(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateResource_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateResource(rctx, args["input"].(model.UpdateResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string), args["resourceKey"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Resource)
+	fc.Result = res
+	return ec.marshalNResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_schools(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1975,6 +2431,269 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_name(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_description(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_objectKey(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ObjectKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_type(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_size(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Size, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_published(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Published, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_dateCreated(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DateCreated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_dateModified(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DateModified, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _School_name(ctx context.Context, field graphql.CollectedField, obj *model.School) (ret graphql.Marshaler) {
@@ -3564,6 +4283,42 @@ func (ec *executionContext) unmarshalInputNewLecture(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewResource(ctx context.Context, obj interface{}) (model.NewResource, error) {
+	var it model.NewResource
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "file":
+			var err error
+			it.File, err = ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "date":
+			var err error
+			it.Date, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewSchool(ctx context.Context, obj interface{}) (model.NewSchool, error) {
 	var it model.NewSchool
 	var asMap = obj.(map[string]interface{})
@@ -3591,6 +4346,48 @@ func (ec *executionContext) unmarshalInputNewSchool(ctx context.Context, obj int
 		case "homepage":
 			var err error
 			it.Homepage, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateResource(ctx context.Context, obj interface{}) (model.UpdateResource, error) {
+	var it model.UpdateResource
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "file":
+			var err error
+			it.File, err = ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "date":
+			var err error
+			it.Date, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "published":
+			var err error
+			it.Published, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3658,6 +4455,17 @@ func (ec *executionContext) _Class(ctx context.Context, sel ast.SelectionSet, ob
 					}
 				}()
 				res = ec._Class_lectures(ctx, field, obj)
+				return res
+			})
+		case "resources":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Class_resources(ctx, field, obj)
 				return res
 			})
 		case "dateCreated":
@@ -3857,6 +4665,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "importCourse":
+			out.Values[i] = ec._Mutation_importCourse(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createClass":
 			out.Values[i] = ec._Mutation_createClass(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -3864,6 +4677,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createLecture":
 			out.Values[i] = ec._Mutation_createLecture(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createResource":
+			out.Values[i] = ec._Mutation_createResource(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateResource":
+			out.Values[i] = ec._Mutation_updateResource(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3911,6 +4734,59 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var resourceImplementors = []string{"Resource"}
+
+func (ec *executionContext) _Resource(ctx context.Context, sel ast.SelectionSet, obj *model.Resource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Resource")
+		case "name":
+			out.Values[i] = ec._Resource_name(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._Resource_description(ctx, field, obj)
+		case "objectKey":
+			out.Values[i] = ec._Resource_objectKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "type":
+			out.Values[i] = ec._Resource_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "size":
+			out.Values[i] = ec._Resource_size(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "published":
+			out.Values[i] = ec._Resource_published(ctx, field, obj)
+		case "dateCreated":
+			out.Values[i] = ec._Resource_dateCreated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "dateModified":
+			out.Values[i] = ec._Resource_dateModified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4462,6 +5338,20 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	return graphql.UnmarshalInt64(v)
+}
+
+func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNLecture2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐLecture(ctx context.Context, sel ast.SelectionSet, v model.Lecture) graphql.Marshaler {
 	return ec._Lecture(ctx, sel, &v)
 }
@@ -4488,8 +5378,26 @@ func (ec *executionContext) unmarshalNNewLecture2githubᚗcomᚋvikelabsᚋlecsh
 	return ec.unmarshalInputNewLecture(ctx, v)
 }
 
+func (ec *executionContext) unmarshalNNewResource2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐNewResource(ctx context.Context, v interface{}) (model.NewResource, error) {
+	return ec.unmarshalInputNewResource(ctx, v)
+}
+
 func (ec *executionContext) unmarshalNNewSchool2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐNewSchool(ctx context.Context, v interface{}) (model.NewSchool, error) {
 	return ec.unmarshalInputNewSchool(ctx, v)
+}
+
+func (ec *executionContext) marshalNResource2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx context.Context, sel ast.SelectionSet, v model.Resource) graphql.Marshaler {
+	return ec._Resource(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx context.Context, sel ast.SelectionSet, v *model.Resource) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Resource(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSchool2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐSchool(ctx context.Context, sel ast.SelectionSet, v model.School) graphql.Marshaler {
@@ -4667,6 +5575,10 @@ func (ec *executionContext) marshalNTranscriptionWord2ᚕᚖgithubᚗcomᚋvikel
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) unmarshalNUpdateResource2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐUpdateResource(ctx context.Context, v interface{}) (model.UpdateResource, error) {
+	return ec.unmarshalInputUpdateResource(ctx, v)
 }
 
 func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
@@ -5016,6 +5928,57 @@ func (ec *executionContext) marshalOLecture2ᚖgithubᚗcomᚋvikelabsᚋlecshar
 	return ec._Lecture(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOResource2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx context.Context, sel ast.SelectionSet, v model.Resource) graphql.Marshaler {
+	return ec._Resource(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOResource2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx context.Context, sel ast.SelectionSet, v []*model.Resource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOResource2ᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐResource(ctx context.Context, sel ast.SelectionSet, v *model.Resource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Resource(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOSchool2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐSchool(ctx context.Context, sel ast.SelectionSet, v model.School) graphql.Marshaler {
 	return ec._School(ctx, sel, &v)
 }
@@ -5050,6 +6013,29 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
+func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	return graphql.UnmarshalTime(v)
+}
+
+func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	return graphql.MarshalTime(v)
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOTime2timeᚐTime(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOTime2timeᚐTime(ctx, sel, *v)
+}
+
 func (ec *executionContext) marshalOTranscriptionWord2githubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐTranscriptionWord(ctx context.Context, sel ast.SelectionSet, v model.TranscriptionWord) graphql.Marshaler {
 	return ec._TranscriptionWord(ctx, sel, &v)
 }
@@ -5059,6 +6045,29 @@ func (ec *executionContext) marshalOTranscriptionWord2ᚖgithubᚗcomᚋvikelabs
 		return graphql.Null
 	}
 	return ec._TranscriptionWord(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
+	return graphql.UnmarshalUpload(v)
+}
+
+func (ec *executionContext) marshalOUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	return graphql.MarshalUpload(v)
+}
+
+func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (*graphql.Upload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, sel, *v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

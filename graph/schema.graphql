@@ -11,11 +11,21 @@ type Query {
 }
 
 type Mutation {
+    # schools
     createSchool(input: NewSchool!): School!
-    createCourse(input: NewCourse! schoolKey: String!): Course!
+
+    # courses
+    createCourse(input: NewCourse! schoolKey: String!): Course!    
+    importCourse(schoolKey: String! courseKey: String! term: String!): Course!
+
+    # classes
     createClass(input: NewClass! schoolKey: String! courseKey: String!): Class!
 
-    # mutation below contains file uploading.
+    # resources
+    createResource(input: NewResource! schoolKey: String! courseKey: String! classKey: String!): Resource!
+    updateResource(input: UpdateResource! schoolKey: String! courseKey: String! classKey: String! resourceKey: String!): Resource!
+    
+    # lectures
     createLecture(input: NewLecture! schoolKey: String! courseKey: String! classKey: String!): Lecture!
 }
 
@@ -50,6 +60,21 @@ input NewLecture {
     description: String
 }
 
+input NewResource {
+    file: Upload
+    date: Time # if not provided, will automatically fill out.
+    name: String
+    description: String
+}
+
+input UpdateResource {
+    file: Upload
+    date: Time # if not provided, will automatically fill out.
+    name: String
+    description: String
+    published: Boolean
+}
+
 type School {
     name: String!
     code: String!
@@ -77,6 +102,7 @@ type Class {
     section: String!
     instructors: [Instructor]! 
     lectures: [Lecture]
+    resources(dateBefore: Time, dateAfter: Time): [Resource]
     dateCreated: Time!
     dateModified: Time!
 }
@@ -87,6 +113,17 @@ type Lecture {
     audio: String!
     duration: Int!
     transcription: Transcription!
+    dateCreated: Time!
+    dateModified: Time!
+}
+
+type Resource {
+    name: String
+    description: String
+    objectKey: String!
+    type: String!
+    size: Int!
+    published: Boolean
     dateCreated: Time!
     dateModified: Time!
 }

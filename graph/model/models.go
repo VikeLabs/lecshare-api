@@ -67,3 +67,18 @@ type Lecture struct {
 	DateCreated   time.Time `json:"dateCreated"`
 	DateModified  time.Time `json:"dateModified"`
 }
+
+type Resource struct {
+	// DynamoDB
+	PK string `json:"id"`
+	SK string `json:"sk"`
+	// Attributes
+	Name         *string   `json:"name"`
+	Description  *string   `json:"description"`
+	ObjectKey    string    `json:"objectKey"`
+	Type         string    `json:"type"`
+	Size         int64     `json:"size"`
+	Published    *bool     `json:"published"`
+	DateCreated  time.Time `json:"dateCreated"`
+	DateModified time.Time `json:"dateModified"`
+}

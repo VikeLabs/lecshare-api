@@ -1,15 +1,19 @@
 package graph
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/h2non/filetype"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
@@ -60,14 +64,33 @@ func (r *Repository) CreateLecture(ctx context.Context, input model.NewLecture, 
 
 	// upload the lecture.
 	// TODO change this to be async.
+
+	head := make([]byte, 261)
+	_, err = input.File.File.Read(head)
+	if err != nil {
+		return nil, gqlerror.Errorf("could not identify uploaded file, please try again after verifying your file.")
+	}
+
+	kind, _ := filetype.Match(head)
+
+	uploadReader := io.MultiReader(bytes.NewReader(head), input.File.File)
+
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		// TODO remove the hardcorded value
 		Bucket: r.ProcessingBucketName,
-		Key:    aws.String(objectKey),
+		Key:    &objectKey,
 		// as we pass in an io.Reader, it will be a stream uploaded (w00t)
-		Body: input.File.File,
-		// TODO set additional metadata about the uploaded file.
+		Body: uploadReader,
+		// TODO set additional metadata about the uploaded file.,
+		ContentType: &kind.MIME.Value,
 	})
+
+	// resource.Type = kind.MIME.Value
+	// resource.Size = input.File.Size
+
+	if err != nil {
+		log.Panicln("an error occurred uploading file", err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to upload file, please try again")
 	}

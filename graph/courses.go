@@ -2,9 +2,15 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vikelabs/lecshare-api/graph/model"
+	"github.com/vikelabs/lecshare-api/utils"
 )
 
 // CreateCourse creates a new course entity in the database.
@@ -31,6 +37,34 @@ func (r *Repository) CreateCourse(ctx context.Context, input model.NewCourse, sc
 
 	}
 	return &course, nil
+}
+
+func (r *Repository) ImportCourse(ctx context.Context, schoolKey string, courseKey string, term string) (*model.Course, error) {
+	jsonFile, err := os.Open("/home/aomi/lecshare-api/graph/uvic_courses_kuali.json")
+	if err != nil {
+		log.Panicln("unable to read file")
+	}
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	defer jsonFile.Close()
+
+	var courses utils.Course
+
+	json.Unmarshal(byteValue, &courses)
+
+	// remove all #'s
+	courseKey = strings.ReplaceAll(courseKey, "#", "")
+	for i := 0; i < len(courses); i++ {
+		c := courses[i]
+		log.Println(c)
+		if c.CatalogCourseID == courseKey {
+			course := model.Course{
+				Name: c.Title,
+			}
+			return &course, nil
+		}
+	}
+	return nil, gqlerror.Errorf("unable to import course")
 }
 
 // ListAllCourses lists all courses.

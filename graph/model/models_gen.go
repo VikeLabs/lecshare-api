@@ -35,6 +35,13 @@ type NewLecture struct {
 	Description *string        `json:"description"`
 }
 
+type NewResource struct {
+	File        *graphql.Upload `json:"file"`
+	Date        *time.Time      `json:"date"`
+	Name        *string         `json:"name"`
+	Description *string         `json:"description"`
+}
+
 type Transcription struct {
 	Transcripts []*string            `json:"transcripts"`
 	Words       []*TranscriptionWord `json:"words"`
@@ -45,4 +52,12 @@ type TranscriptionWord struct {
 	Starttime *string `json:"starttime"`
 	Endtime   *string `json:"endtime"`
 	Word      string  `json:"word"`
+}
+
+type UpdateResource struct {
+	File        *graphql.Upload `json:"file"`
+	Date        *time.Time      `json:"date"`
+	Name        *string         `json:"name"`
+	Description *string         `json:"description"`
+	Published   *bool           `json:"published"`
 }

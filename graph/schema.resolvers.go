@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"time"
 
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
@@ -12,6 +13,13 @@ import (
 
 func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
 	return r.Repository.ListAllLectures(ctx, obj)
+}
+
+func (r *classResolver) Resources(ctx context.Context, obj *model.Class, dateBefore *time.Time, dateAfter *time.Time) ([]*model.Resource, error) {
+	if dateAfter != nil || dateBefore != nil {
+		return r.Repository.ListResourcesByTime(ctx, obj, dateBefore, dateAfter)
+	}
+	return r.Repository.ListAllResources(ctx, obj)
 }
 
 func (r *courseResolver) Classes(ctx context.Context, obj *model.Course) ([]*model.Class, error) {
@@ -30,12 +38,24 @@ func (r *mutationResolver) CreateCourse(ctx context.Context, input model.NewCour
 	return r.Repository.CreateCourse(ctx, input, schoolKey)
 }
 
+func (r *mutationResolver) ImportCourse(ctx context.Context, schoolKey string, courseKey string, term string) (*model.Course, error) {
+	return r.Repository.ImportCourse(ctx, schoolKey, courseKey, term)
+}
+
 func (r *mutationResolver) CreateClass(ctx context.Context, input model.NewClass, schoolKey string, courseKey string) (*model.Class, error) {
 	return r.Repository.CreateClass(ctx, input, schoolKey, courseKey)
 }
 
 func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
 	return r.Repository.CreateLecture(ctx, input, schoolKey, courseKey, classKey)
+}
+
+func (r *mutationResolver) CreateResource(ctx context.Context, input model.NewResource, schoolKey string, courseKey string, classKey string) (*model.Resource, error) {
+	return r.Repository.CreateResource(ctx, input, schoolKey, courseKey, classKey)
+}
+
+func (r *mutationResolver) UpdateResource(ctx context.Context, input model.UpdateResource, schoolKey string, courseKey string, classKey string, resourceKey string) (*model.Resource, error) {
+	return r.Repository.UpdateResource(ctx, input, schoolKey, courseKey, classKey, resourceKey)
 }
 
 func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {
