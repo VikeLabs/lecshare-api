@@ -66,8 +66,8 @@ func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.Sch
 	return r.Repository.ListAllSchools(ctx, code)
 }
 
-func (r *schoolResolver) Courses(ctx context.Context, obj *model.School) ([]*model.Course, error) {
-	return r.Repository.ListAllCourses(ctx, obj)
+func (r *schoolResolver) Courses(ctx context.Context, obj *model.School, subject *string, code *string) ([]*model.Course, error) {
+	return r.Repository.ListCourses(ctx, obj)
 }
 
 // Class returns generated.ClassResolver implementation.

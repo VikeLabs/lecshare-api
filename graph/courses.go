@@ -67,8 +67,8 @@ func (r *Repository) ImportCourse(ctx context.Context, schoolKey string, courseK
 	return nil, gqlerror.Errorf("unable to import course")
 }
 
-// ListAllCourses lists all courses.
-func (r *Repository) ListAllCourses(ctx context.Context, obj *model.School) ([]*model.Course, error) {
+// ListCourses lists all courses.
+func (r *Repository) ListCourses(ctx context.Context, obj *model.School) ([]*model.Course, error) {
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 

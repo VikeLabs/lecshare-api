@@ -89,7 +89,7 @@ type School {
     code: String!
     description: String
     homepage: String
-    courses: [Course]!
+    courses(subject: String, code: String): [Course]!
     dateCreated: Time!
     dateModified: Time!
 }
