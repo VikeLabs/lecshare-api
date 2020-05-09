@@ -16,7 +16,7 @@ func (r *Repository) ListClasses(ctx context.Context, obj *model.Course) ([]*mod
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
-	auth := ctx.Value("ACCESS").(string)
+	// auth := ctx.Value("ACCESS").(string)
 
 	var classes []model.Class
 	var classesRef []*model.Class
@@ -25,10 +25,10 @@ func (r *Repository) ListClasses(ctx context.Context, obj *model.Course) ([]*mod
 
 	if len(classes) != 0 {
 		for i := 0; i < len(classes); i++ {
-			c := classes[i]
-			if len(c.AccessKey) > 0 && c.AccessKey != auth {
-				continue
-			}
+			// c := classes[i]
+			// if len(c.AccessKey) > 0 && c.AccessKey != auth {
+			// 	continue
+			// }
 			classesRef = append(classesRef, &classes[i])
 		}
 
