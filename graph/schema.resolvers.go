@@ -7,23 +7,27 @@ import (
 	"context"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
 func (r *classResolver) Lectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
-	return r.Repository.ListAllLectures(ctx, obj)
+	return r.Repository.ListLectures(ctx, obj)
 }
 
 func (r *classResolver) Resources(ctx context.Context, obj *model.Class, dateBefore *time.Time, dateAfter *time.Time) ([]*model.Resource, error) {
 	if dateAfter != nil || dateBefore != nil {
 		return r.Repository.ListResourcesByTime(ctx, obj, dateBefore, dateAfter)
 	}
-	return r.Repository.ListAllResources(ctx, obj)
+	return r.Repository.ListResources(ctx, obj)
 }
 
-func (r *courseResolver) Classes(ctx context.Context, obj *model.Course) ([]*model.Class, error) {
-	return r.Repository.ListAllClasses(ctx, obj)
+func (r *courseResolver) Classes(ctx context.Context, obj *model.Course, term *string) ([]*model.Class, error) {
+	if term != nil {
+		return r.Repository.ListClassesByTerm(ctx, obj, term)
+	}
+	return r.Repository.ListClasses(ctx, obj)
 }
 
 func (r *lectureResolver) Transcription(ctx context.Context, obj *model.Lecture) (*model.Transcription, error) {
@@ -50,10 +54,6 @@ func (r *mutationResolver) CreateClass(ctx context.Context, input model.NewClass
 	return r.Repository.CreateClass(ctx, input, schoolKey, courseKey)
 }
 
-func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
-	return r.Repository.CreateLecture(ctx, input, schoolKey, courseKey, classKey)
-}
-
 func (r *mutationResolver) CreateResource(ctx context.Context, input model.NewResource, schoolKey string, courseKey string, classKey string) (*model.Resource, error) {
 	return r.Repository.CreateResource(ctx, input, schoolKey, courseKey, classKey)
 }
@@ -62,8 +62,22 @@ func (r *mutationResolver) UpdateResource(ctx context.Context, input model.Updat
 	return r.Repository.UpdateResource(ctx, input, schoolKey, courseKey, classKey, resourceKey)
 }
 
+func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
+	return r.Repository.CreateLecture(ctx, input, schoolKey, courseKey, classKey)
+}
+
 func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {
-	return r.Repository.ListAllSchools(ctx, code)
+	return r.Repository.ListSchools(ctx, code)
+}
+
+func (r *resourceResolver) URL(ctx context.Context, obj *model.Resource) (string, error) {
+	svc := s3.New(r.Repository.Session)
+	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: r.Repository.AssetsBucketName,
+		Key:    &obj.SK,
+	})
+	presignedURL, _ := req.Presign(60 * time.Minute)
+	return presignedURL, nil
 }
 
 func (r *schoolResolver) Courses(ctx context.Context, obj *model.School, subject *string, code *string) ([]*model.Course, error) {
@@ -85,6 +99,9 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Resource returns generated.ResourceResolver implementation.
+func (r *Resolver) Resource() generated.ResourceResolver { return &resourceResolver{r} }
+
 // School returns generated.SchoolResolver implementation.
 func (r *Resolver) School() generated.SchoolResolver { return &schoolResolver{r} }
 
@@ -93,4 +110,5 @@ type courseResolver struct{ *Resolver }
 type lectureResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type resourceResolver struct{ *Resolver }
 type schoolResolver struct{ *Resolver }

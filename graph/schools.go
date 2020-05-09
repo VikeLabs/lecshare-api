@@ -18,7 +18,7 @@ func (r *Repository) CreateSchool(ctx context.Context, input model.NewSchool) (*
 	table := db.Table(*r.TableName)
 
 	// input validation
-	err := r.Validate.Struct(input)
+	err = r.Validate.Struct(input)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
 			graphql.AddErrorf(ctx, "field: %s, error: %s", err.StructField(), err.Tag())
@@ -41,7 +41,12 @@ func (r *Repository) CreateSchool(ctx context.Context, input model.NewSchool) (*
 	// attempt to put into table if it does not exist.
 	err = table.Put(school).If("attribute_not_exists(PK)").Run()
 	if err != nil {
+		fmt.Println(err)
 		return nil, gqlerror.Errorf("Error: enable to create new School record.")
+	}
+	// return newly created school instance.
+	return &school, nil
+}
 
 func (r *Repository) UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolKey string) (*model.School, error) {
 	db := r.DynamoDB
@@ -75,7 +80,7 @@ func (r *Repository) UpdateSchool(ctx context.Context, input model.UpdateSchool,
 }
 
 // ListAllSchools lists all schools within the table.
-func (r *Repository) ListAllSchools(ctx context.Context, code *string) ([]*model.School, error) {
+func (r *Repository) ListSchools(ctx context.Context, code *string) ([]*model.School, error) {
 	// note: the same table is used used accross the entire base application.
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)

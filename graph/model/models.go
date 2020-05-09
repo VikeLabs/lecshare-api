@@ -19,9 +19,9 @@ type School struct {
 }
 
 type NewSchool struct {
-	Name        string  `json:"name" validate:"required"`
-	Code        string  `json:"code" validate:"gte=4,lte=8"`
-	Description *string `json:"description"`
+	Name        string  `json:"name" validate:"required,gte=4,lte=32"`
+	Code        string  `json:"code" validate:"gte=4,lte=8,alphaunicode"`
+	Description *string `json:"description" validate:"max=280"`
 	Homepage    *string `json:"homepage" validate:"url"`
 }
 
@@ -51,6 +51,7 @@ type Class struct {
 	Lectures     []Lecture     `json:"lectures"`
 	DateCreated  time.Time     `json:"dateCreated"`
 	DateModified time.Time     `json:"dateModified"`
+	AccessKey    string        `json:"accessKey"`
 }
 
 type Lecture struct {
@@ -77,6 +78,7 @@ type Resource struct {
 	Description  *string   `json:"description"`
 	ObjectKey    string    `json:"objectKey"`
 	Type         string    `json:"type"`
+	ContentType  string    `json:"contentType"`
 	Size         int64     `json:"size"`
 	Published    *bool     `json:"published"`
 	DateCreated  time.Time `json:"dateCreated"`

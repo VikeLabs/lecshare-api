@@ -61,3 +61,11 @@ type UpdateResource struct {
 	Description *string         `json:"description"`
 	Published   *bool           `json:"published"`
 }
+
+type UpdateSchool struct {
+	Name        *string         `json:"name"`
+	Description *string         `json:"description"`
+	Homepage    *string         `json:"homepage"`
+	HeaderImage *graphql.Upload `json:"headerImage"`
+	LogoImage   *graphql.Upload `json:"logoImage"`
+}
