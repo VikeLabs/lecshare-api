@@ -212,3 +212,17 @@ func (r *Repository) ListResourcesByTime(ctx context.Context, obj *model.Class, 
 
 	return resourcesRef, nil
 }
+
+func (r *Repository) GetResourceByKey(ctx context.Context, schoolKey string, courseKey string, classKey string, resourceKey string) (*model.Resource, error) {
+	table := r.DynamoDB.Table(*r.TableName)
+
+	pk := strings.Join([]string{schoolKey, courseKey, classKey}, "#")
+	var resource model.Resource
+
+	err := table.Get("PK", pk).Range("SK", dynamo.Equal, resourceKey).One(&resource)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resource, nil
+}
