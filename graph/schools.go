@@ -43,8 +43,34 @@ func (r *Repository) CreateSchool(ctx context.Context, input model.NewSchool) (*
 	if err != nil {
 		return nil, gqlerror.Errorf("Error: enable to create new School record.")
 
+func (r *Repository) UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolKey string) (*model.School, error) {
+	db := r.DynamoDB
+	table := db.Table(*r.TableName)
+
+	var school model.School
+
+	err := table.Get("PK", "ORG").Range("SK", dynamo.Equal, schoolKey).One(&school)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to find specfied school")
 	}
-	// return newly created school instance.
+
+	if input.Description != nil {
+		school.Description = input.Description
+	}
+
+	if input.Name != nil {
+		school.Name = *input.Name
+	}
+
+	if input.Homepage != nil {
+		school.Homepage = input.Homepage
+	}
+
+	err = table.Put(&school).Run()
+	if err != nil {
+		return nil, fmt.Errorf("Unable to update specified school record")
+	}
+
 	return &school, nil
 }
 

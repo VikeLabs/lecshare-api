@@ -34,6 +34,10 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewScho
 	return r.Repository.CreateSchool(ctx, input)
 }
 
+func (r *mutationResolver) UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolKey string) (*model.School, error) {
+	return r.Repository.UpdateSchool(ctx, input, schoolKey)
+}
+
 func (r *mutationResolver) CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error) {
 	return r.Repository.CreateCourse(ctx, input, schoolKey)
 }

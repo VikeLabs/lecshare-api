@@ -13,6 +13,7 @@ type Query {
 type Mutation {
     # schools
     createSchool(input: NewSchool!): School!
+    updateSchool(input: UpdateSchool! schoolKey: String!): School!
 
     # courses
     createCourse(input: NewCourse! schoolKey: String!): Course!    
@@ -35,6 +36,14 @@ input NewSchool {
     code: String!
     description: String
     homepage: String
+}
+
+input UpdateSchool {
+    name: String
+    description: String
+    homepage: String
+    headerImage: Upload
+    logoImage: Upload
 }
 
 # Create a new course, within a school.
