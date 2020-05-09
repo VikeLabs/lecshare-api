@@ -14,16 +14,16 @@ import (
 )
 
 // CreateCourse creates a new course entity in the database.
-func (r *Repository) CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error) {
+func (r *Repository) CreateCourse(ctx context.Context, input model.NewCourse, schoolCode string) (*model.Course, error) {
 	// setup DynamoDB
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
-	// TODO validate schoolKey
+	// TODO validate schoolCode
 
 	// create new course instance
 	course := model.Course{
-		PK:          schoolKey,
+		PK:          schoolCode,
 		SK:          input.Subject + "#" + input.Code,
 		Name:        input.Name,
 		Subject:     input.Subject,
@@ -39,7 +39,7 @@ func (r *Repository) CreateCourse(ctx context.Context, input model.NewCourse, sc
 	return &course, nil
 }
 
-func (r *Repository) ImportCourse(ctx context.Context, schoolKey string, courseKey string, term string) (*model.Course, error) {
+func (r *Repository) ImportCourse(ctx context.Context, schoolCode string, courseCode string, term string) (*model.Course, error) {
 	jsonFile, err := os.Open("/home/aomi/lecshare-api/graph/uvic_courses_kuali.json")
 	if err != nil {
 		log.Panicln("unable to read file")
@@ -53,11 +53,11 @@ func (r *Repository) ImportCourse(ctx context.Context, schoolKey string, courseK
 	json.Unmarshal(byteValue, &courses)
 
 	// remove all #'s
-	courseKey = strings.ReplaceAll(courseKey, "#", "")
+	courseCode = strings.ReplaceAll(courseCode, "#", "")
 	for i := 0; i < len(courses); i++ {
 		c := courses[i]
 		log.Println(c)
-		if c.CatalogCourseID == courseKey {
+		if c.CatalogCourseID == courseCode {
 			course := model.Course{
 				Name: c.Title,
 			}

@@ -89,14 +89,14 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateClass    func(childComplexity int, input model.NewClass, schoolKey string, courseKey string) int
-		CreateCourse   func(childComplexity int, input model.NewCourse, schoolKey string) int
-		CreateLecture  func(childComplexity int, input model.NewLecture, schoolKey string, courseKey string, classKey string) int
-		CreateResource func(childComplexity int, input model.NewResource, schoolKey string, courseKey string, classKey string) int
+		CreateClass    func(childComplexity int, input model.NewClass, schoolCode string, courseCode string) int
+		CreateCourse   func(childComplexity int, input model.NewCourse, schoolCode string) int
+		CreateLecture  func(childComplexity int, input model.NewLecture, schoolCode string, courseCode string, classCode string) int
+		CreateResource func(childComplexity int, input model.NewResource, schoolCode string, courseCode string, classCode string) int
 		CreateSchool   func(childComplexity int, input model.NewSchool) int
-		ImportCourse   func(childComplexity int, schoolKey string, courseKey string, term string) int
-		UpdateResource func(childComplexity int, input model.UpdateResource, schoolKey string, courseKey string, classKey string, resourceKey string) int
-		UpdateSchool   func(childComplexity int, input model.UpdateSchool, schoolKey string) int
+		ImportCourse   func(childComplexity int, schoolCode string, courseCode string, term string) int
+		UpdateResource func(childComplexity int, input model.UpdateResource, schoolCode string, courseCode string, classCode string, resourceKey string) int
+		UpdateSchool   func(childComplexity int, input model.UpdateSchool, schoolCode string) int
 	}
 
 	Query struct {
@@ -151,13 +151,13 @@ type LectureResolver interface {
 }
 type MutationResolver interface {
 	CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error)
-	UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolKey string) (*model.School, error)
-	CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error)
-	ImportCourse(ctx context.Context, schoolKey string, courseKey string, term string) (*model.Course, error)
-	CreateClass(ctx context.Context, input model.NewClass, schoolKey string, courseKey string) (*model.Class, error)
-	CreateResource(ctx context.Context, input model.NewResource, schoolKey string, courseKey string, classKey string) (*model.Resource, error)
-	UpdateResource(ctx context.Context, input model.UpdateResource, schoolKey string, courseKey string, classKey string, resourceKey string) (*model.Resource, error)
-	CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error)
+	UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolCode string) (*model.School, error)
+	CreateCourse(ctx context.Context, input model.NewCourse, schoolCode string) (*model.Course, error)
+	ImportCourse(ctx context.Context, schoolCode string, courseCode string, term string) (*model.Course, error)
+	CreateClass(ctx context.Context, input model.NewClass, schoolCode string, courseCode string) (*model.Class, error)
+	CreateResource(ctx context.Context, input model.NewResource, schoolCode string, courseCode string, classCode string) (*model.Resource, error)
+	UpdateResource(ctx context.Context, input model.UpdateResource, schoolCode string, courseCode string, classCode string, resourceKey string) (*model.Resource, error)
+	CreateLecture(ctx context.Context, input model.NewLecture, schoolCode string, courseCode string, classCode string) (*model.Lecture, error)
 }
 type QueryResolver interface {
 	Schools(ctx context.Context, code *string) ([]*model.School, error)
@@ -393,7 +393,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateClass(childComplexity, args["input"].(model.NewClass), args["schoolKey"].(string), args["courseKey"].(string)), true
+		return e.complexity.Mutation.CreateClass(childComplexity, args["input"].(model.NewClass), args["schoolCode"].(string), args["courseCode"].(string)), true
 
 	case "Mutation.createCourse":
 		if e.complexity.Mutation.CreateCourse == nil {
@@ -405,7 +405,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateCourse(childComplexity, args["input"].(model.NewCourse), args["schoolKey"].(string)), true
+		return e.complexity.Mutation.CreateCourse(childComplexity, args["input"].(model.NewCourse), args["schoolCode"].(string)), true
 
 	case "Mutation.createLecture":
 		if e.complexity.Mutation.CreateLecture == nil {
@@ -417,7 +417,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateLecture(childComplexity, args["input"].(model.NewLecture), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string)), true
+		return e.complexity.Mutation.CreateLecture(childComplexity, args["input"].(model.NewLecture), args["schoolCode"].(string), args["courseCode"].(string), args["classCode"].(string)), true
 
 	case "Mutation.createResource":
 		if e.complexity.Mutation.CreateResource == nil {
@@ -429,7 +429,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateResource(childComplexity, args["input"].(model.NewResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string)), true
+		return e.complexity.Mutation.CreateResource(childComplexity, args["input"].(model.NewResource), args["schoolCode"].(string), args["courseCode"].(string), args["classCode"].(string)), true
 
 	case "Mutation.createSchool":
 		if e.complexity.Mutation.CreateSchool == nil {
@@ -453,7 +453,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ImportCourse(childComplexity, args["schoolKey"].(string), args["courseKey"].(string), args["term"].(string)), true
+		return e.complexity.Mutation.ImportCourse(childComplexity, args["schoolCode"].(string), args["courseCode"].(string), args["term"].(string)), true
 
 	case "Mutation.updateResource":
 		if e.complexity.Mutation.UpdateResource == nil {
@@ -465,7 +465,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateResource(childComplexity, args["input"].(model.UpdateResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string), args["resourceKey"].(string)), true
+		return e.complexity.Mutation.UpdateResource(childComplexity, args["input"].(model.UpdateResource), args["schoolCode"].(string), args["courseCode"].(string), args["classCode"].(string), args["resourceKey"].(string)), true
 
 	case "Mutation.updateSchool":
 		if e.complexity.Mutation.UpdateSchool == nil {
@@ -477,7 +477,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateSchool(childComplexity, args["input"].(model.UpdateSchool), args["schoolKey"].(string)), true
+		return e.complexity.Mutation.UpdateSchool(childComplexity, args["input"].(model.UpdateSchool), args["schoolCode"].(string)), true
 
 	case "Query.schools":
 		if e.complexity.Query.Schools == nil {
@@ -736,21 +736,21 @@ type Query {
 type Mutation {
     # schools
     createSchool(input: NewSchool!): School!
-    updateSchool(input: UpdateSchool! schoolKey: String!): School!
+    updateSchool(input: UpdateSchool! schoolCode: String!): School!
 
     # courses
-    createCourse(input: NewCourse! schoolKey: String!): Course!    
-    importCourse(schoolKey: String! courseKey: String! term: String!): Course!
+    createCourse(input: NewCourse! schoolCode: String!): Course!    
+    importCourse(schoolCode: String! courseCode: String! term: String!): Course!
 
     # classes
-    createClass(input: NewClass! schoolKey: String! courseKey: String!): Class!
+    createClass(input: NewClass! schoolCode: String! courseCode: String!): Class!
 
     # resources
-    createResource(input: NewResource! schoolKey: String! courseKey: String! classKey: String!): Resource!
-    updateResource(input: UpdateResource! schoolKey: String! courseKey: String! classKey: String! resourceKey: String!): Resource!
+    createResource(input: NewResource! schoolCode: String! courseCode: String! classCode: String!): Resource!
+    updateResource(input: UpdateResource! schoolCode: String! courseCode: String! classCode: String! resourceKey: String!): Resource!
     
     # lectures
-    createLecture(input: NewLecture! schoolKey: String! courseKey: String! classKey: String!): Lecture!
+    createLecture(input: NewLecture! schoolCode: String! courseCode: String! classCode: String!): Lecture!
 }
 
 # Creates a new school.
@@ -935,21 +935,21 @@ func (ec *executionContext) field_Mutation_createClass_args(ctx context.Context,
 	}
 	args["input"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schoolKey"]; ok {
+	if tmp, ok := rawArgs["schoolCode"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schoolKey"] = arg1
+	args["schoolCode"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["courseKey"]; ok {
+	if tmp, ok := rawArgs["courseCode"]; ok {
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["courseKey"] = arg2
+	args["courseCode"] = arg2
 	return args, nil
 }
 
@@ -965,13 +965,13 @@ func (ec *executionContext) field_Mutation_createCourse_args(ctx context.Context
 	}
 	args["input"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schoolKey"]; ok {
+	if tmp, ok := rawArgs["schoolCode"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schoolKey"] = arg1
+	args["schoolCode"] = arg1
 	return args, nil
 }
 
@@ -987,29 +987,29 @@ func (ec *executionContext) field_Mutation_createLecture_args(ctx context.Contex
 	}
 	args["input"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schoolKey"]; ok {
+	if tmp, ok := rawArgs["schoolCode"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schoolKey"] = arg1
+	args["schoolCode"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["courseKey"]; ok {
+	if tmp, ok := rawArgs["courseCode"]; ok {
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["courseKey"] = arg2
+	args["courseCode"] = arg2
 	var arg3 string
-	if tmp, ok := rawArgs["classKey"]; ok {
+	if tmp, ok := rawArgs["classCode"]; ok {
 		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["classKey"] = arg3
+	args["classCode"] = arg3
 	return args, nil
 }
 
@@ -1025,29 +1025,29 @@ func (ec *executionContext) field_Mutation_createResource_args(ctx context.Conte
 	}
 	args["input"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schoolKey"]; ok {
+	if tmp, ok := rawArgs["schoolCode"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schoolKey"] = arg1
+	args["schoolCode"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["courseKey"]; ok {
+	if tmp, ok := rawArgs["courseCode"]; ok {
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["courseKey"] = arg2
+	args["courseCode"] = arg2
 	var arg3 string
-	if tmp, ok := rawArgs["classKey"]; ok {
+	if tmp, ok := rawArgs["classCode"]; ok {
 		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["classKey"] = arg3
+	args["classCode"] = arg3
 	return args, nil
 }
 
@@ -1069,21 +1069,21 @@ func (ec *executionContext) field_Mutation_importCourse_args(ctx context.Context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["schoolKey"]; ok {
+	if tmp, ok := rawArgs["schoolCode"]; ok {
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schoolKey"] = arg0
+	args["schoolCode"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["courseKey"]; ok {
+	if tmp, ok := rawArgs["courseCode"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["courseKey"] = arg1
+	args["courseCode"] = arg1
 	var arg2 string
 	if tmp, ok := rawArgs["term"]; ok {
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
@@ -1107,29 +1107,29 @@ func (ec *executionContext) field_Mutation_updateResource_args(ctx context.Conte
 	}
 	args["input"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schoolKey"]; ok {
+	if tmp, ok := rawArgs["schoolCode"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schoolKey"] = arg1
+	args["schoolCode"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["courseKey"]; ok {
+	if tmp, ok := rawArgs["courseCode"]; ok {
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["courseKey"] = arg2
+	args["courseCode"] = arg2
 	var arg3 string
-	if tmp, ok := rawArgs["classKey"]; ok {
+	if tmp, ok := rawArgs["classCode"]; ok {
 		arg3, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["classKey"] = arg3
+	args["classCode"] = arg3
 	var arg4 string
 	if tmp, ok := rawArgs["resourceKey"]; ok {
 		arg4, err = ec.unmarshalNString2string(ctx, tmp)
@@ -1153,13 +1153,13 @@ func (ec *executionContext) field_Mutation_updateSchool_args(ctx context.Context
 	}
 	args["input"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["schoolKey"]; ok {
+	if tmp, ok := rawArgs["schoolCode"]; ok {
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["schoolKey"] = arg1
+	args["schoolCode"] = arg1
 	return args, nil
 }
 
@@ -2222,7 +2222,7 @@ func (ec *executionContext) _Mutation_updateSchool(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateSchool(rctx, args["input"].(model.UpdateSchool), args["schoolKey"].(string))
+		return ec.resolvers.Mutation().UpdateSchool(rctx, args["input"].(model.UpdateSchool), args["schoolCode"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2263,7 +2263,7 @@ func (ec *executionContext) _Mutation_createCourse(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateCourse(rctx, args["input"].(model.NewCourse), args["schoolKey"].(string))
+		return ec.resolvers.Mutation().CreateCourse(rctx, args["input"].(model.NewCourse), args["schoolCode"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2304,7 +2304,7 @@ func (ec *executionContext) _Mutation_importCourse(ctx context.Context, field gr
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ImportCourse(rctx, args["schoolKey"].(string), args["courseKey"].(string), args["term"].(string))
+		return ec.resolvers.Mutation().ImportCourse(rctx, args["schoolCode"].(string), args["courseCode"].(string), args["term"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2345,7 +2345,7 @@ func (ec *executionContext) _Mutation_createClass(ctx context.Context, field gra
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateClass(rctx, args["input"].(model.NewClass), args["schoolKey"].(string), args["courseKey"].(string))
+		return ec.resolvers.Mutation().CreateClass(rctx, args["input"].(model.NewClass), args["schoolCode"].(string), args["courseCode"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2386,7 +2386,7 @@ func (ec *executionContext) _Mutation_createResource(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateResource(rctx, args["input"].(model.NewResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string))
+		return ec.resolvers.Mutation().CreateResource(rctx, args["input"].(model.NewResource), args["schoolCode"].(string), args["courseCode"].(string), args["classCode"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2427,7 +2427,7 @@ func (ec *executionContext) _Mutation_updateResource(ctx context.Context, field 
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateResource(rctx, args["input"].(model.UpdateResource), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string), args["resourceKey"].(string))
+		return ec.resolvers.Mutation().UpdateResource(rctx, args["input"].(model.UpdateResource), args["schoolCode"].(string), args["courseCode"].(string), args["classCode"].(string), args["resourceKey"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2468,7 +2468,7 @@ func (ec *executionContext) _Mutation_createLecture(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateLecture(rctx, args["input"].(model.NewLecture), args["schoolKey"].(string), args["courseKey"].(string), args["classKey"].(string))
+		return ec.resolvers.Mutation().CreateLecture(rctx, args["input"].(model.NewLecture), args["schoolCode"].(string), args["courseCode"].(string), args["classCode"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

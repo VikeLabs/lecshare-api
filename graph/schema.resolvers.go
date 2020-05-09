@@ -38,32 +38,32 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.NewScho
 	return r.Repository.CreateSchool(ctx, input)
 }
 
-func (r *mutationResolver) UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolKey string) (*model.School, error) {
-	return r.Repository.UpdateSchool(ctx, input, schoolKey)
+func (r *mutationResolver) UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolCode string) (*model.School, error) {
+	return r.Repository.UpdateSchool(ctx, input, schoolCode)
 }
 
-func (r *mutationResolver) CreateCourse(ctx context.Context, input model.NewCourse, schoolKey string) (*model.Course, error) {
-	return r.Repository.CreateCourse(ctx, input, schoolKey)
+func (r *mutationResolver) CreateCourse(ctx context.Context, input model.NewCourse, schoolCode string) (*model.Course, error) {
+	return r.Repository.CreateCourse(ctx, input, schoolCode)
 }
 
-func (r *mutationResolver) ImportCourse(ctx context.Context, schoolKey string, courseKey string, term string) (*model.Course, error) {
-	return r.Repository.ImportCourse(ctx, schoolKey, courseKey, term)
+func (r *mutationResolver) ImportCourse(ctx context.Context, schoolCode string, courseCode string, term string) (*model.Course, error) {
+	return r.Repository.ImportCourse(ctx, schoolCode, courseCode, term)
 }
 
-func (r *mutationResolver) CreateClass(ctx context.Context, input model.NewClass, schoolKey string, courseKey string) (*model.Class, error) {
-	return r.Repository.CreateClass(ctx, input, schoolKey, courseKey)
+func (r *mutationResolver) CreateClass(ctx context.Context, input model.NewClass, schoolCode string, courseCode string) (*model.Class, error) {
+	return r.Repository.CreateClass(ctx, input, schoolCode, courseCode)
 }
 
-func (r *mutationResolver) CreateResource(ctx context.Context, input model.NewResource, schoolKey string, courseKey string, classKey string) (*model.Resource, error) {
-	return r.Repository.CreateResource(ctx, input, schoolKey, courseKey, classKey)
+func (r *mutationResolver) CreateResource(ctx context.Context, input model.NewResource, schoolCode string, courseCode string, classCode string) (*model.Resource, error) {
+	return r.Repository.CreateResource(ctx, input, schoolCode, courseCode, classCode)
 }
 
-func (r *mutationResolver) UpdateResource(ctx context.Context, input model.UpdateResource, schoolKey string, courseKey string, classKey string, resourceKey string) (*model.Resource, error) {
-	return r.Repository.UpdateResource(ctx, input, schoolKey, courseKey, classKey, resourceKey)
+func (r *mutationResolver) UpdateResource(ctx context.Context, input model.UpdateResource, schoolCode string, courseCode string, classCode string, resourceKey string) (*model.Resource, error) {
+	return r.Repository.UpdateResource(ctx, input, schoolCode, courseCode, classCode, resourceKey)
 }
 
-func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
-	return r.Repository.CreateLecture(ctx, input, schoolKey, courseKey, classKey)
+func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLecture, schoolCode string, courseCode string, classCode string) (*model.Lecture, error) {
+	return r.Repository.CreateLecture(ctx, input, schoolCode, courseCode, classCode)
 }
 
 func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {

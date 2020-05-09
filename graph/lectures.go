@@ -18,27 +18,27 @@ import (
 )
 
 // CreateLecture creates a new lecture instance within a class.
-func (r *Repository) CreateLecture(ctx context.Context, input model.NewLecture, schoolKey string, courseKey string, classKey string) (*model.Lecture, error) {
+func (r *Repository) CreateLecture(ctx context.Context, input model.NewLecture, schoolCode string, courseCode string, classCode string) (*model.Lecture, error) {
 	// setup
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 	uploader := s3manager.NewUploader(r.Session)
 
-	// parse out the subject, code, term, section for the objectkey.
-	subjectCode := strings.Split(courseKey, "#")
-	termSection := strings.Split(classKey, "#")
+	// parse out the subject, code, term, section for the objectCode.
+	subjectCode := strings.Split(courseCode, "#")
+	termSection := strings.Split(classCode, "#")
 
 	fmt.Println(subjectCode, termSection)
 
-	objectKey := strings.Join([]string{schoolKey, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", input.File.Filename}, "/")
+	objectKey := strings.Join([]string{schoolCode, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", input.File.Filename}, "/")
 
 	// TODO input validation
 
 	ext := path.Ext(input.File.Filename)
 	outfile := input.File.Filename[0 : len(input.File.Filename)-len(ext)]
 
-	audioKey := strings.Join([]string{schoolKey, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", outfile + ".ogg"}, "/")
-	transcriptionKey := strings.Join([]string{schoolKey, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", outfile + ".json"}, "/")
+	audioKey := strings.Join([]string{schoolCode, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", outfile + ".ogg"}, "/")
+	transcriptionKey := strings.Join([]string{schoolCode, subjectCode[0], subjectCode[1], termSection[0], termSection[1], "lectures", outfile + ".json"}, "/")
 
 	// initialize blank lecture and populate
 	lecture := []model.Lecture{
@@ -56,7 +56,7 @@ func (r *Repository) CreateLecture(ctx context.Context, input model.NewLecture, 
 	}
 
 	// create a new lecture entry in the table.
-	err := table.Update("PK", schoolKey+"#"+courseKey).Range("SK", classKey).Append("Lectures", lecture).Run()
+	err := table.Update("PK", schoolCode+"#"+courseCode).Range("SK", classCode).Append("Lectures", lecture).Run()
 	if err != nil {
 		fmt.Println(err)
 		return nil, fmt.Errorf("unable to create a lecture entry. please try again or contact the developers")

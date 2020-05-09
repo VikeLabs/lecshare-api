@@ -48,13 +48,13 @@ func (r *Repository) CreateSchool(ctx context.Context, input model.NewSchool) (*
 	return &school, nil
 }
 
-func (r *Repository) UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolKey string) (*model.School, error) {
+func (r *Repository) UpdateSchool(ctx context.Context, input model.UpdateSchool, schoolCode string) (*model.School, error) {
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	var school model.School
 
-	err := table.Get("PK", "ORG").Range("SK", dynamo.Equal, schoolKey).One(&school)
+	err := table.Get("PK", "ORG").Range("SK", dynamo.Equal, schoolCode).One(&school)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to find specfied school")
 	}
