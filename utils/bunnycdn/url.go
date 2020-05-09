@@ -16,13 +16,13 @@ type Generator struct {
 // GenerateURL generates an expiring url to access the CDN
 // expirationDuration can be in any unit as long as it's type is time.Duration
 // path should begin with a forward slash like this: "/content/image.jpg"
-func GenerateURL(generator Generator, path string, expirationDuration time.Duration) string {
+func (gen *Generator) GenerateURL(path string, expirationDuration time.Duration) string {
 	expirationDate := time.Now().Add(expirationDuration)
 	expirationUnix := strconv.FormatInt(expirationDate.Unix(), 10)
-	tokenContent := []byte(generator.APIKey + path + expirationUnix)
+	tokenContent := []byte(gen.APIKey + path + expirationUnix)
 	hash := md5.Sum(tokenContent)
 	tokenB64 := base64.RawURLEncoding.EncodeToString(hash[:]) // pass hash as a slice
 
-	url := generator.Hostname + path + "?token=" + tokenB64 + "&expires" + expirationUnix
+	url := gen.Hostname + path + "?token=" + tokenB64 + "&expires" + expirationUnix
 	return url
 }
