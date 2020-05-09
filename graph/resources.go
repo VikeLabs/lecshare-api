@@ -1,9 +1,7 @@
 package graph
 
 import (
-	"bytes"
 	"context"
-	"io"
 	"log"
 	"strings"
 	"time"
@@ -11,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/guregu/dynamo"
-	"github.com/h2non/filetype"
+	"github.com/h2non/filetype/types"
 	"github.com/rs/xid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vikelabs/lecshare-api/graph/model"
@@ -46,22 +44,15 @@ func (r *Repository) CreateResource(ctx context.Context, input model.NewResource
 
 	if input.File != nil {
 		uploader := s3manager.NewUploader(r.Session)
-		head := make([]byte, 261)
-		_, err := input.File.File.Read(head)
-		if err != nil {
-			return nil, gqlerror.Errorf("could not identify uploaded file, please try again after verifying your file.")
-		}
-
-		kind, _ := filetype.Match(head)
-
-		uploadReader := io.MultiReader(bytes.NewReader(head), input.File.File)
+		var kind types.Type
+		uploaderReader, err := FileTypeReader(input.File.File, &kind)
 
 		_, err = uploader.Upload(&s3manager.UploadInput{
 			// TODO remove the hardcorded value
 			Bucket: r.AssetsBucketName,
 			Key:    &sk,
 			// as we pass in an io.Reader, it will be a stream uploaded (w00t)
-			Body: uploadReader,
+			Body: uploaderReader,
 			// TODO set additional metadata about the uploaded file.,
 			Metadata: aws.StringMap(map[string]string{
 				"Parent-Key": pk,
@@ -69,7 +60,8 @@ func (r *Repository) CreateResource(ctx context.Context, input model.NewResource
 			ContentType: &kind.MIME.Value,
 		})
 
-		resource.Type = kind.MIME.Value
+		resource.ContentType = kind.MIME.Value
+		resource.Type = "file"
 		resource.Size = input.File.Size
 
 		if err != nil {
@@ -102,22 +94,15 @@ func (r *Repository) UpdateResource(ctx context.Context, input model.UpdateResou
 
 	if input.File != nil {
 		uploader := s3manager.NewUploader(r.Session)
-		head := make([]byte, 261)
-		_, err := input.File.File.Read(head)
-		if err != nil {
-			return nil, gqlerror.Errorf("could not identify uploaded file, please try again after verifying your file.")
-		}
-
-		kind, _ := filetype.Match(head)
-
-		uploadReader := io.MultiReader(bytes.NewReader(head), input.File.File)
+		var kind types.Type
+		uploaderReader, err := FileTypeReader(input.File.File, &kind)
 
 		_, err = uploader.Upload(&s3manager.UploadInput{
 			// TODO remove the hardcorded value
 			Bucket: r.AssetsBucketName,
 			Key:    &resourceKey,
 			// as we pass in an io.Reader, it will be a stream uploaded (w00t)
-			Body: uploadReader,
+			Body: uploaderReader,
 			// TODO set additional metadata about the uploaded file.,
 			Metadata: aws.StringMap(map[string]string{
 				"Parent-Key": pk,
@@ -156,7 +141,7 @@ func (r *Repository) UpdateResource(ctx context.Context, input model.UpdateResou
 	return &resource, nil
 }
 
-func (r *Repository) ListAllResources(ctx context.Context, obj *model.Class) ([]*model.Resource, error) {
+func (r *Repository) ListResources(ctx context.Context, obj *model.Class) ([]*model.Resource, error) {
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
