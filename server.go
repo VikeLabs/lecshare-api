@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/go-playground/validator/v10"
 	"github.com/guregu/dynamo"
+	"github.com/joho/godotenv"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/utils"
@@ -31,10 +32,16 @@ func main() {
 	session := session.New(&aws.Config{Region: aws.String("us-west-2")})
 	db := dynamo.New(session)
 
+	// for local development only
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	// Preparation for resolvers.
-	bucketName := os.Getenv("bucketName")
-	processingBucketName := os.Getenv("processingBucketName")
-	tableName := os.Getenv("tableName")
+	bucketName := os.Getenv("BUCKET_NAME")
+	processingBucketName := os.Getenv("PROCESSING_BUCKET_NAME")
+	tableName := os.Getenv("TABLE_NAME")
 
 	validate := validator.New()
 

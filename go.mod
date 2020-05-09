@@ -10,6 +10,8 @@ require (
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/guregu/dynamo v1.7.0
 	github.com/h2non/filetype v1.0.12
+	github.com/joho/godotenv v1.3.0
 	github.com/rs/xid v1.2.1
 	github.com/vektah/gqlparser/v2 v2.0.1
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 )

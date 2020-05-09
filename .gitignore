@@ -3,6 +3,7 @@ build/**
 layer/**
 vendor
 .serverless
+.env
 *.coverprofile
 node_modules
 functions/test
