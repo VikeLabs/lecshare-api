@@ -23,6 +23,6 @@ func (gen *Generator) GenerateURL(path string, expirationDuration time.Duration)
 	hash := md5.Sum(tokenContent)
 	tokenB64 := base64.RawURLEncoding.EncodeToString(hash[:]) // pass hash as a slice
 
-	url := gen.Hostname + path + "?token=" + tokenB64 + "&expires" + expirationUnix
+	url := gen.Hostname + path + "?token=" + tokenB64 + "&expires=" + expirationUnix
 	return url
 }
