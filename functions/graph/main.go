@@ -16,6 +16,7 @@ import (
 	"github.com/guregu/dynamo"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
+	"github.com/vikelabs/lecshare-api/utils/bunnycdn"
 )
 
 var h *httpadapter.HandlerAdapter
@@ -35,19 +36,25 @@ func main() {
 
 	bucketName := os.Getenv("BUCKET_NAME")
 	processingBucketName := os.Getenv("PROCESSING_BUCKET_NAME")
-	// cdn := os.Getenv("CDN")
+	cdn := os.Getenv("CDN")
 	tableName := os.Getenv("TABLE_NAME")
 
 	validate := validator.New()
+	presigner := bunnycdn.Generator{
+		APIKey:   os.Getenv("CDN_API_KEY"),
+		Hostname: cdn,
+	}
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		Repository: graph.Repository{
-			DynamoDB:             db,
-			TableName:            &tableName,
-			Session:              session,
-			AssetsBucketName:     &bucketName,
-			ProcessingBucketName: &processingBucketName,
-			Validate:             validate,
+			DynamoDB:              db,
+			TableName:             &tableName,
+			Session:               session,
+			AssetsBucketName:      &bucketName,
+			ProcessingBucketName:  &processingBucketName,
+			Validate:              validate,
+			CDN:                   &cdn,
+			PresignedURLGenerator: &presigner,
 		},
 	}}))
 

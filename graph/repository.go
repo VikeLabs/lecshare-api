@@ -9,6 +9,7 @@ import (
 	"github.com/guregu/dynamo"
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/types"
+	"github.com/vikelabs/lecshare-api/utils/bunnycdn"
 )
 
 // Repository is _
@@ -22,6 +23,9 @@ type Repository struct {
 	Session              *session.Session
 	ProcessingBucketName *string
 	AssetsBucketName     *string
+
+	CDN                   *string
+	PresignedURLGenerator *bunnycdn.Generator
 }
 
 // FileTypeReader will identity the MIME type from an io.Reader

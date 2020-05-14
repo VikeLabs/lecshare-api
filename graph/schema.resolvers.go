@@ -7,7 +7,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
@@ -71,13 +70,10 @@ func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.Sch
 }
 
 func (r *resourceResolver) URL(ctx context.Context, obj *model.Resource) (string, error) {
-	svc := s3.New(r.Repository.Session)
-	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: r.Repository.AssetsBucketName,
-		Key:    &obj.SK,
-	})
-	presignedURL, _ := req.Presign(60 * time.Minute)
-	return presignedURL, nil
+	if len(*r.Repository.CDN) > 0 {
+		return r.Repository.PresignedURLGenerator.GenerateURL("/"+obj.ObjectKey, 60*time.Minute), nil
+	}
+	return "", nil
 }
 
 func (r *schoolResolver) Courses(ctx context.Context, obj *model.School, subject *string, code *string) ([]*model.Course, error) {

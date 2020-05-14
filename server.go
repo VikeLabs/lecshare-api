@@ -19,7 +19,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
-	"github.com/vikelabs/lecshare-api/utils"
+	"github.com/vikelabs/lecshare-api/utils/bunnycdn"
 )
 
 var (
@@ -48,16 +48,22 @@ func main() {
 	tableName := os.Getenv("TABLE_NAME")
 
 	validate := validator.New()
+	presigner := bunnycdn.Generator{
+		APIKey:   os.Getenv("CDN_API_KEY"),
+		Hostname: cdn,
+	}
 
 	// Initialize GraphQL resolvers
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		Repository: graph.Repository{
-			DynamoDB:             db,
-			TableName:            &tableName,
-			Session:              session,
-			AssetsBucketName:     &bucketName,
-			ProcessingBucketName: &processingBucketName,
-			Validate:             validate,
+			DynamoDB:              db,
+			TableName:             &tableName,
+			Session:               session,
+			AssetsBucketName:      &bucketName,
+			ProcessingBucketName:  &processingBucketName,
+			Validate:              validate,
+			CDN:                   &cdn,
+			PresignedURLGenerator: &presigner,
 		},
 	}}))
 
