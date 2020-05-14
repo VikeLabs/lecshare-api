@@ -41,6 +41,7 @@ func main() {
 	// Preparation for resolvers.
 	bucketName := os.Getenv("BUCKET_NAME")
 	processingBucketName := os.Getenv("PROCESSING_BUCKET_NAME")
+	cdn := os.Getenv("CDN")
 	tableName := os.Getenv("TABLE_NAME")
 
 	validate := validator.New()

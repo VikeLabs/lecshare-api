@@ -32,9 +32,10 @@ func main() {
 	session := session.New(&aws.Config{Region: aws.String("us-west-2")})
 	db := dynamo.New(session)
 
-	bucketName := os.Getenv("bucketName")
-	processingBucketName := os.Getenv("processingBucketName")
-	tableName := os.Getenv("tableName")
+	bucketName := os.Getenv("BUCKET_NAME")
+	processingBucketName := os.Getenv("PROCESSING_BUCKET_NAME")
+	// cdn := os.Getenv("CDN")
+	tableName := os.Getenv("TABLE_NAME")
 
 	validate := validator.New()
 

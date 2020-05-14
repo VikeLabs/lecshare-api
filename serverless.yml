@@ -24,9 +24,10 @@ provider:
   runtime: go1.x
   # stage: production
   environment:
-    tableName: ${self:custom.tableName}
-    bucketName: ${self:custom.generalBucket}
-    processingBucketName: ${self:custom.processingBucket}
+    TABLE_NAME: ${self:custom.tableName}
+    BUCKET_NAME: ${self:custom.generalBucket}
+    BUCKET_NAME_CDN: "https://cdn.lecshare.vikelabs.ca"
+    PROCESSING_BUCKET_NAME: ${self:custom.processingBucket}
   iamRoleStatements:
   - Effect: Allow
     Action:
