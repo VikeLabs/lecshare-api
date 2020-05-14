@@ -108,6 +108,7 @@ type ComplexityRoot struct {
 		DateCreated  func(childComplexity int) int
 		DateModified func(childComplexity int) int
 		Description  func(childComplexity int) int
+		Filename     func(childComplexity int) int
 		Name         func(childComplexity int) int
 		ObjectKey    func(childComplexity int) int
 		Published    func(childComplexity int) int
@@ -519,6 +520,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Resource.Description(childComplexity), true
 
+	case "Resource.filename":
+		if e.complexity.Resource.Filename == nil {
+			break
+		}
+
+		return e.complexity.Resource.Filename(childComplexity), true
+
 	case "Resource.name":
 		if e.complexity.Resource.Name == nil {
 			break
@@ -852,13 +860,23 @@ type Lecture {
 type Resource {
     name: String
     description: String
-    objectKey: String!
+    # unique identifer for resource.
+    objectKey: String! 
+    # URL to access resource
     url: String!
+    # type which is not associated with the underlying file format.
     type: String!
+    # MIME value
     contentType: String!
+    # filename of the uploaded resource.
+    filename: String!
+    # size of the file in bytes.
     size: Int!
+    # allow public access to the resource.
     published: Boolean
+    # time and date when resource was created.
     dateCreated: Time!
+    # time and date when resource was updated.
     dateModified: Time!
 }
 
@@ -2777,6 +2795,40 @@ func (ec *executionContext) _Resource_contentType(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.ContentType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Resource_filename(ctx context.Context, field graphql.CollectedField, obj *model.Resource) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Resource",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Filename, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5070,6 +5122,11 @@ func (ec *executionContext) _Resource(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "contentType":
 			out.Values[i] = ec._Resource_contentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "filename":
+			out.Values[i] = ec._Resource_filename(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}

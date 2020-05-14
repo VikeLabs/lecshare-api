@@ -100,7 +100,7 @@ type Course {
     code: String!
     description: String
     homepage: String
-    classes: [Class]!
+    classes(term: String): [Class]!
 }
 
 type Class {
@@ -129,11 +129,23 @@ type Lecture {
 type Resource {
     name: String
     description: String
-    objectKey: String!
+    # unique identifer for resource.
+    objectKey: String! 
+    # URL to access resource
+    url: String!
+    # type which is not associated with the underlying file format.
     type: String!
+    # MIME value
+    contentType: String!
+    # filename of the uploaded resource.
+    filename: String!
+    # size of the file in bytes.
     size: Int!
+    # allow public access to the resource.
     published: Boolean
+    # time and date when resource was created.
     dateCreated: Time!
+    # time and date when resource was updated.
     dateModified: Time!
 }
 
