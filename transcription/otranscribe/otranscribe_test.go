@@ -13,7 +13,7 @@ func TestOTRGeneration(t *testing.T) {
 }
 
 func TestOTRUnmarshal(t *testing.T) {
-	file, err := os.Open("./testfiles/vikelabs_test1.otr")
+	file, err := os.Open("./testfiles/test.otr")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,7 +23,7 @@ func TestOTRUnmarshal(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	var o OTR
+	var o Transcription
 
 	err = json.Unmarshal(otrBytes, &o)
 	if err != nil {

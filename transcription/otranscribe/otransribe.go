@@ -12,21 +12,21 @@ import (
 	"golang.org/x/net/html"
 )
 
-type OTR struct {
-	Text      []Word `json:"text"`
-	Media     string `json:"media"`
-	MediaTime int    `json:"media-time"`
+type Transcription struct {
+	Text      []Data  `json:"text"`
+	Media     string  `json:"media"`
+	MediaTime float32 `json:"media-time"`
 }
 
-type Word struct {
-	Word      string
+type Data struct {
+	Data      string
+	Type      string
 	Timestamp float64
 }
 
-const t = `{{ range . }}<span class="wordstamp" data-timestamp="{{ printf "%.1f" .Timestamp }}">{{ .Word }}</span>
-{{ end }}`
+const t = `{{ range . }}<span class="{{ .Type }}" data-timestamp="{{ printf "%.1f" .Timestamp }}">{{ .Data }}</span>{{ end }}`
 
-func marshalWords(words *[]Word) string {
+func marshalWords(words *[]Data) string {
 	var buf bytes.Buffer
 	t := template.Must(template.New("otr-text").Parse(t))
 	err := t.Execute(&buf, *words)
@@ -36,8 +36,8 @@ func marshalWords(words *[]Word) string {
 	return buf.String()
 }
 
-func unmarshalWords(r io.Reader, data *[]Word) error {
-	var word Word
+func unmarshalWords(r io.Reader, data *[]Data) error {
+	var word Data
 	tokenizer := html.NewTokenizer(r)
 	for {
 		tokenType := tokenizer.Next()
@@ -54,13 +54,15 @@ func unmarshalWords(r io.Reader, data *[]Word) error {
 			token := tokenizer.Token()
 			if "span" == token.Data {
 				for _, attr := range token.Attr {
-					if attr.Key == "data-timestamp" {
+					if attr.Key == "class" {
+						word.Type = attr.Val
+					} else if attr.Key == "data-timestamp" {
 						word.Timestamp, _ = strconv.ParseFloat(attr.Val, 32)
 					}
 				}
 				tokenType = tokenizer.Next()
 				if tokenType == html.TextToken {
-					word.Word = tokenizer.Token().Data
+					word.Data = tokenizer.Token().Data
 					*data = append(*data, word)
 				}
 			}
@@ -70,8 +72,9 @@ func unmarshalWords(r io.Reader, data *[]Word) error {
 	return nil
 }
 
-func (s *OTR) UnmarshalJSON(data []byte) error {
-	type Alias OTR
+// UnmarshalJSON implements OTR unmarshalling
+func (s *Transcription) UnmarshalJSON(data []byte) error {
+	type Alias Transcription
 	aux := &struct {
 		Text string `json:"text"`
 		*Alias
@@ -87,8 +90,9 @@ func (s *OTR) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s OTR) MarshalJSON() ([]byte, error) {
-	type Alias OTR
+// MarshalJSON implements marshalling for OTR
+func (s Transcription) MarshalJSON() ([]byte, error) {
+	type Alias Transcription
 	return json.Marshal(&struct {
 		Text string `json:"text"`
 		*Alias
