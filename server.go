@@ -8,6 +8,9 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -47,7 +50,7 @@ func main() {
 	validate := validator.New()
 
 	// Initialize GraphQL resolvers
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		Repository: graph.Repository{
 			DynamoDB:             db,
 			TableName:            &tableName,
@@ -58,9 +61,26 @@ func main() {
 		},
 	}}))
 
+	var mb int64 = 1 << 20
+
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.MultipartForm{
+		MaxMemory:     128 * mb,
+		MaxUploadSize: 128 * mb,
+	})
+
+	srv.SetQueryCache(lru.New(1000))
+
+	srv.Use(extension.Introspection{})
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New(100),
+	})
+
 	// define routes for development.
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", utils.CorsMiddleware(srv))
+	http.Handle("/query", srv)
 
 	// host on user defined port / default port.
 	log.Printf("connect to http://%s:%d/ for GraphQL playground", host, port)

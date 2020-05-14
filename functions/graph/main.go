@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -52,10 +53,15 @@ func main() {
 
 	var mb int64 = 1 << 20
 
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.MultipartForm{
-		MaxMemory:     32 * mb,
-		MaxUploadSize: 32 * mb,
+		MaxMemory:     128 * mb,
+		MaxUploadSize: 128 * mb,
 	})
+
+	srv.SetQueryCache(lru.New(1000))
 
 	h = httpadapter.New(srv)
 
