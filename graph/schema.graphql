@@ -13,21 +13,21 @@ type Query {
 type Mutation {
     # schools
     createSchool(input: NewSchool!): School!
-    updateSchool(input: UpdateSchool! schoolKey: String!): School!
+    updateSchool(input: UpdateSchool! schoolCode: String!): School!
 
     # courses
-    createCourse(input: NewCourse! schoolKey: String!): Course!    
-    importCourse(schoolKey: String! courseKey: String! term: String!): Course!
+    createCourse(input: NewCourse! schoolCode: String!): Course!    
+    importCourse(schoolCode: String! courseCode: String! term: String!): Course!
 
     # classes
-    createClass(input: NewClass! schoolKey: String! courseKey: String!): Class!
+    createClass(input: NewClass! schoolCode: String! courseCode: String!): Class!
 
     # resources
-    createResource(input: NewResource! schoolKey: String! courseKey: String! classKey: String!): Resource!
-    updateResource(input: UpdateResource! schoolKey: String! courseKey: String! classKey: String! resourceKey: String!): Resource!
+    createResource(input: NewResource! schoolCode: String! courseCode: String! classCode: String!): Resource!
+    updateResource(input: UpdateResource! schoolCode: String! courseCode: String! classCode: String! resourceKey: String!): Resource!
     
     # lectures
-    createLecture(input: NewLecture! schoolKey: String! courseKey: String! classKey: String!): Lecture!
+    createLecture(input: NewLecture! schoolCode: String! courseCode: String! classCode: String!): Lecture!
 }
 
 # Creates a new school.

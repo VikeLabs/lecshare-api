@@ -15,7 +15,8 @@ import (
 	"github.com/vikelabs/lecshare-api/graph/model"
 )
 
-func (r *Repository) CreateResource(ctx context.Context, input model.NewResource, schoolKey string, courseKey string, classKey string) (*model.Resource, error) {
+// CreateResource creates a resource record
+func (r *Repository) CreateResource(ctx context.Context, input model.NewResource, schoolCode string, courseCode string, classCode string) (*model.Resource, error) {
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
@@ -198,10 +199,10 @@ func (r *Repository) ListResourcesByTime(ctx context.Context, obj *model.Class, 
 	return resourcesRef, nil
 }
 
-func (r *Repository) GetResourceByKey(ctx context.Context, schoolKey string, courseKey string, classKey string, resourceKey string) (*model.Resource, error) {
+func (r *Repository) GetResourceByKey(ctx context.Context, schoolCode string, courseCode string, classCode string, resourceKey string) (*model.Resource, error) {
 	table := r.DynamoDB.Table(*r.TableName)
 
-	pk := strings.Join([]string{schoolKey, courseKey, classKey}, "#")
+	pk := strings.Join([]string{schoolCode, courseCode, classCode}, "#")
 	var resource model.Resource
 
 	err := table.Get("PK", pk).Range("SK", dynamo.Equal, resourceKey).One(&resource)
