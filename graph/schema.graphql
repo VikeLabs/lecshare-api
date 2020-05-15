@@ -8,6 +8,7 @@ schema {
 
 type Query {
     schools(code: String): [School]!
+    courses(schoolCode: String! subjectCode: String courseCode: String): [Course]!
 }
 
 type Mutation {

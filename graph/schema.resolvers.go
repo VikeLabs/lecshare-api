@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/vikelabs/lecshare-api/graph/generated"
@@ -67,6 +68,18 @@ func (r *mutationResolver) CreateLecture(ctx context.Context, input model.NewLec
 
 func (r *queryResolver) Schools(ctx context.Context, code *string) ([]*model.School, error) {
 	return r.Repository.ListSchools(ctx, code)
+}
+
+func (r *queryResolver) Courses(ctx context.Context, schoolCode string, subjectCode *string, courseCode *string) ([]*model.Course, error) {
+	school := model.School{
+		Code: schoolCode,
+	}
+	if subjectCode != nil {
+		return r.Repository.ListCoursesBySubject(ctx, schoolCode, *subjectCode)
+	} else if subjectCode != nil && courseCode != nil {
+		return nil, fmt.Errorf("Sorry, not yet supported")
+	}
+	return r.Repository.ListCourses(ctx, &school)
 }
 
 func (r *resourceResolver) URL(ctx context.Context, obj *model.Resource) (string, error) {

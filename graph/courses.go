@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/guregu/dynamo"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vikelabs/lecshare-api/graph/model"
 	"github.com/vikelabs/lecshare-api/utils"
@@ -76,6 +77,25 @@ func (r *Repository) ListCourses(ctx context.Context, obj *model.School) ([]*mod
 	var coursesRef []*model.Course
 
 	table.Get("PK", obj.Code).All(&courses)
+
+	// convert to slice of pointers.
+	for i := 0; i < len(courses); i++ {
+		coursesRef = append(coursesRef, &courses[i])
+	}
+	return coursesRef, nil
+}
+
+func (r Repository) ListCoursesBySubject(ctx context.Context, schoolCode string, subjectCode string) ([]*model.Course, error) {
+	db := r.DynamoDB
+	table := db.Table(*r.TableName)
+
+	var courses []model.Course
+	var coursesRef []*model.Course
+
+	err := table.Get("PK", schoolCode).Range("SK", dynamo.BeginsWith, subjectCode).AllWithContext(ctx, &courses)
+	if err != nil {
+		return nil, err
+	}
 
 	// convert to slice of pointers.
 	for i := 0; i < len(courses); i++ {
