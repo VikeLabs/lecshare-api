@@ -14,11 +14,11 @@ import (
 
 // CreateSchool creates a new "School" entry in DynamoDB
 func (r *Repository) CreateSchool(ctx context.Context, input model.NewSchool) (*model.School, error) {
-	db := r.DynamoDB
+	db := dynamo.New(r.Session)
 	table := db.Table(*r.TableName)
 
 	// input validation
-	err = r.Validate.Struct(input)
+	err := r.Validate.Struct(input)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
 			graphql.AddErrorf(ctx, "field: %s, error: %s", err.StructField(), err.Tag())
