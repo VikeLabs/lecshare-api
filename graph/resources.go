@@ -20,18 +20,19 @@ func (r *Repository) CreateResource(ctx context.Context, input model.NewResource
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
-	// input validation
-	// err := r.Validate.Struct(input)
-	// if err != nil {
-	// 	for _, err := range err.(validator.ValidationErrors) {
-	// 		graphql.AddErrorf(ctx, "field: %s, error: %s", err.StructField(), err.Tag())
-	// 	}
-	// 	return nil, gqlerror.Errorf("Error input errors")
-	// }
+	//  input validation
+	err := r.Validate.Struct(input)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			graphql.AddErrorf(ctx, "field: %s, error: %s", err.StructField(), err.Tag())
+		}
+		return nil, gqlerror.Errorf("Error input errors")
+	}
 
+	// unique guid for resource
 	guid := xid.New()
 
-	pk := strings.Join([]string{schoolKey, courseKey, classKey}, "#")
+	pk := strings.Join([]string{schoolCode, courseCode, classCode, "_RESOURCE"}, "#")
 	sk := guid.String()
 
 	resource := model.Resource{
@@ -48,22 +49,37 @@ func (r *Repository) CreateResource(ctx context.Context, input model.NewResource
 		var kind types.Type
 		uploaderReader, err := FileTypeReader(input.File.File, &kind)
 
+		// s3 object keys are picky, so we sanitize them. COVID19 never forget
+		sanitizedFilename := strings.TrimSpace(input.File.Filename)
+		sanitizedFilename = strings.ReplaceAll(sanitizedFilename, " ", "_")
+
+		objectKey := strings.Join([]string{schoolCode, "resources", sk, sanitizedFilename}, "/")
+
+		fmt.Println(kind.MIME.Value)
+
 		_, err = uploader.Upload(&s3manager.UploadInput{
 			// TODO remove the hardcorded value
 			Bucket: r.AssetsBucketName,
-			Key:    &sk,
+			Key:    &objectKey,
 			// as we pass in an io.Reader, it will be a stream uploaded (w00t)
 			Body: uploaderReader,
 			// TODO set additional metadata about the uploaded file.,
 			Metadata: aws.StringMap(map[string]string{
-				"Parent-Key": pk,
+				"PartitionKey": pk,
+				"SortKey":      sk,
 			}),
 			ContentType: &kind.MIME.Value,
+			// so we can bill appropriately
+			Tagging: aws.String("PROJECT=LECSHARE&ORG=" + schoolCode),
 		})
 
+		// according to MIME type
 		resource.ContentType = kind.MIME.Value
 		resource.Type = "file"
+		// note we're storing the "orignal"
+		resource.Filename = input.File.Filename
 		resource.Size = input.File.Size
+		resource.ObjectKey = objectKey
 
 		if err != nil {
 			log.Panicln("an error occurred uploading file", err)
@@ -71,7 +87,7 @@ func (r *Repository) CreateResource(ctx context.Context, input model.NewResource
 	}
 
 	// attempt to put into table if it does not exist.
-	err := table.Put(resource).If("attribute_not_exists(PK)").Run()
+	err = table.Put(resource).If("attribute_not_exists(PK)").Run()
 	if err != nil {
 		return nil, gqlerror.Errorf("Error: enable to create new Resource record.")
 
@@ -80,13 +96,23 @@ func (r *Repository) CreateResource(ctx context.Context, input model.NewResource
 	return &resource, nil
 }
 
-func (r *Repository) UpdateResource(ctx context.Context, input model.UpdateResource, schoolKey string, courseKey string, classKey string, resourceKey string) (*model.Resource, error) {
+// CreateEncodedResource takes a resource, and transforms it another encoding.
+// func (r *Repository) CreateEncodedResource(ctx context.Context, schoolCode string, courseCode string, classCode string) {
+// 	table := r.DynamoDB.Table(*r.TableName)
+
+// 	pk := strings.Join([]string{schoolCode, courseCode, classCode, "_RESOURCE"}, "#")
+// 	var resource model.Resource
+// 	err := table.Get("PK", pk).Range("SK", dynamo.Equal, resourceKey).One(&resource)
+
+// }
+
+func (r *Repository) UpdateResource(ctx context.Context, input model.UpdateResource, schoolCode string, courseCode string, classCode string, resourceKey string) (*model.Resource, error) {
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	resource := model.Resource{}
 
-	pk := strings.Join([]string{schoolKey, courseKey, classKey}, "#")
+	pk := strings.Join([]string{schoolCode, courseCode, classCode}, "#")
 
 	err := table.Get("PK", pk).Range("SK", dynamo.Equal, resourceKey).One(&resource)
 	if err != nil {
