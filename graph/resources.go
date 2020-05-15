@@ -2,12 +2,15 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/go-playground/validator/v10"
 	"github.com/guregu/dynamo"
 	"github.com/h2non/filetype/types"
 	"github.com/rs/xid"
@@ -180,7 +183,7 @@ func (r *Repository) ListResources(ctx context.Context, obj *model.Class) ([]*mo
 	// since it is expected to return a slice of ptrs, we make a slice of ptrs.
 	var resourcesRef []*model.Resource
 
-	pk := strings.Join([]string{obj.PK, obj.Term, obj.Section}, "#")
+	pk := strings.Join([]string{obj.PK, obj.Term, obj.Section, "_RESOURCE"}, "#")
 	table.Get("PK", pk).All(&resources)
 
 	// convert to slice of pointers.
