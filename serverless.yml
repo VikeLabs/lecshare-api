@@ -1,12 +1,16 @@
 service: lecshare-api
-
 custom:
+  # Object Storage Bucket Names
   generalBucket: assets-lecshare.oimo.ca
   processingBucket: lecshare-audio-processing
   transcriptionBucket: lecshare-transcriptions
   # try to use the argument, then the provider stage
   stage: ${opt:stage, self:provider.stage}
   tableName: lecshare-api-${self:custom.stage}
+   # Pub / Sub Topic Names
+  startMediaEncoderTopicName: lecshare-start-media-encoder-${self:custom.stage}
+  finishMediaEncoderTopicName: lecshare-finish-media-encoder-${self:custom.stage}
+  # Custom Domain
   customDomain:
     # TODO change over to vikelabs.ca
     domainName: dev.oimo.ca
@@ -20,6 +24,7 @@ custom:
 provider:
   name: aws
   region: us-west-2 # oregon
+  # default memory for size for all Lambda functions unless specified.
   memorySize: 512
   runtime: go1.x
   # stage: production
@@ -58,6 +63,16 @@ provider:
       - s3:PutObject
       - s3:DeleteObject
     Resource: "arn:aws:s3:::${self:custom.transcriptionBucket}/*"
+  - Effect: Allow
+    Action:
+      - sns:Publish
+      - sns:Subscribe 
+    Resource: "arn:aws:sns:::${self:custom.startMediaEncoderTopicName}"
+  - Effect: Allow
+    Action:
+      - sns:Publish
+      - sns:Subscribe 
+    Resource: "arn:aws:sns:::${self:custom.finishMediaEncoderTopicName}"
 functions:
   playground:
     description: GraphQL Playground Lambda
@@ -97,7 +112,6 @@ functions:
   store-transcription:
     description: Puts transcription in proper bucket and folder
     handler: bin/store-transcription
-    memorySize: 512
     events:
       - s3:
         bucket: ${self:custom.transcriptionBucket}
@@ -122,6 +136,25 @@ resources:
           - AttributeName: SK
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
+        Tags:
+          - Key: PROJECT
+            Value: LECSHARE
+    MediaEncoderStartTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.startMediaEncoderTopicName} 
+        DisplayName: "Topic for to be started media encode jobs."
+        Tags:
+          - Key: PROJECT
+            Value: LECSHARE
+    MediaEncoderFinishTopic:
+      Type: AWS::SNS::Topic
+      Properties: 
+        TopicName: ${self:custom.finishMediaEncoderTopicName}
+        DisplayName: "Topic for finished media encode jobs."
+        Tags:
+          - Key: PROJECT
+            Value: LECSHARE
 package:
   # configuration of the files required in this service.
   exclude:
