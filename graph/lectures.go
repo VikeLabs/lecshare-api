@@ -101,7 +101,27 @@ func (r *Repository) CreateLecture(ctx context.Context, input model.NewLecture, 
 	return &lecture[0], nil
 }
 
-func (r *Repository) ListAllLectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
+// CreateLectureFromResource takes a generic resource and creates a lecture.
+func (r *Repository) CreateLectureFromResource(ctx context.Context, schoolCode string, courseCode string, classCode string, resourceCode string) (*model.Lecture, error) {
+	resource, err := r.GetResourceByKey(ctx, schoolCode, courseCode, classCode, resourceCode)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if the resource is valid to be turn into a lecture
+	s := strings.Split(resource.Type, "/")
+	if s[0] != "audio" {
+		return nil, fmt.Errorf("cannot take a non-audio resource into a lecture")
+	}
+
+	// create transcription / conversion processing job.
+
+	resource.Type = "lecture"
+
+	return nil, nil
+}
+
+func (r *Repository) ListLectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
 	// converts slice types (slice of values to slice of ptrs)
 	// TODO sign with BunnyCDN pre-signed for security / CDN.
 	fmt.Println(obj)
@@ -111,10 +131,10 @@ func (r *Repository) ListAllLectures(ctx context.Context, obj *model.Class) ([]*
 		svc := s3.New(r.Session)
 		var lecturesRef []*model.Lecture
 		for i := 0; i < len(obj.Lectures); i++ {
-			key := obj.Lectures[i].Audio
+			Code := obj.Lectures[i].Audio
 			req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
 				Bucket: r.AssetsBucketName,
-				Key:    key,
+				Key:    Code,
 			})
 			presignedURL, _ := req.Presign(60 * time.Minute)
 			obj.Lectures[i].Audio = &presignedURL
