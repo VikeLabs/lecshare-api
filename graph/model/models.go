@@ -78,6 +78,7 @@ type Resource struct {
 	Description  *string   `json:"description"`
 	ObjectKey    string    `json:"objectKey"`
 	Type         string    `json:"type"`
+	Filename     string    `json:"fileName"`
 	ContentType  string    `json:"contentType"`
 	Size         int64     `json:"size"`
 	Published    *bool     `json:"published"`

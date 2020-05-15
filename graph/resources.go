@@ -111,8 +111,11 @@ func (r *Repository) UpdateResource(ctx context.Context, input model.UpdateResou
 			ContentType: &kind.MIME.Value,
 		})
 
-		resource.Type = kind.MIME.Value
+		resource.ContentType = kind.MIME.Value
+		resource.Type = "file"
+		resource.Filename = input.File.Filename
 		resource.Size = input.File.Size
+		// resource.ObjectKey = objectKey
 
 		if err != nil {
 			log.Panicln("an error occurred uploading file", err)
