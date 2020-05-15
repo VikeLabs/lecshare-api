@@ -124,7 +124,14 @@ functions:
     handler: bin/slackbot
     events:
      - sns: 
-        arn: "arn:aws:sns:::${self:custom.finishMediaEncoderTopicName}"
+        arn:
+          Fn::Join:
+            - ':'
+            - - 'arn:aws:sns'
+              - Ref: 'AWS::Region'
+              - Ref: 'AWS::AccountId'
+              - ${self:custom.startMediaEncoderTopicName}
+        topicName: ${self:custom.startMediaEncoderTopicName}
 resources:
   Resources:
     LecshareTable:
