@@ -119,6 +119,12 @@ functions:
         event: s3:ObjectCreated:*
         rules:
           - suffix: .json
+  slackbot:
+    description: Subscribes to a SNS topic, outputs to a Slack webhook URL
+    handler: bin/slackbot
+    events:
+     - sns: 
+        arn: "arn:aws:sns:::${self:custom.finishMediaEncoderTopicName}"
 resources:
   Resources:
     LecshareTable:
