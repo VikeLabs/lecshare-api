@@ -100,6 +100,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Classes func(childComplexity int, schoolCode string, subjectCode string, courseCode string, term *string, section *string) int
 		Courses func(childComplexity int, schoolCode string, subjectCode *string, courseCode *string) int
 		Schools func(childComplexity int, code *string) int
 	}
@@ -164,6 +165,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Schools(ctx context.Context, code *string) ([]*model.School, error)
 	Courses(ctx context.Context, schoolCode string, subjectCode *string, courseCode *string) ([]*model.Course, error)
+	Classes(ctx context.Context, schoolCode string, subjectCode string, courseCode string, term *string, section *string) ([]*model.Class, error)
 }
 type ResourceResolver interface {
 	URL(ctx context.Context, obj *model.Resource) (string, error)
@@ -482,6 +484,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateSchool(childComplexity, args["input"].(model.UpdateSchool), args["schoolCode"].(string)), true
 
+	case "Query.classes":
+		if e.complexity.Query.Classes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_classes_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Classes(childComplexity, args["schoolCode"].(string), args["subjectCode"].(string), args["courseCode"].(string), args["term"].(*string), args["section"].(*string)), true
+
 	case "Query.courses":
 		if e.complexity.Query.Courses == nil {
 			break
@@ -754,6 +768,7 @@ schema {
 type Query {
     schools(code: String): [School]!
     courses(schoolCode: String! subjectCode: String courseCode: String): [Course]!
+    classes(schoolCode: String! subjectCode: String! courseCode: String! term: String section: String): [Class]!
 }
 
 type Mutation {
@@ -1207,6 +1222,52 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_classes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["schoolCode"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["schoolCode"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["subjectCode"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["subjectCode"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["courseCode"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["courseCode"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["term"]; ok {
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["term"] = arg3
+	var arg4 *string
+	if tmp, ok := rawArgs["section"]; ok {
+		arg4, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["section"] = arg4
 	return args, nil
 }
 
@@ -2628,6 +2689,47 @@ func (ec *executionContext) _Query_courses(ctx context.Context, field graphql.Co
 	res := resTmp.([]*model.Course)
 	fc.Result = res
 	return ec.marshalNCourse2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐCourse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_classes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_classes_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Classes(rctx, args["schoolCode"].(string), args["subjectCode"].(string), args["courseCode"].(string), args["term"].(*string), args["section"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Class)
+	fc.Result = res
+	return ec.marshalNClass2ᚕᚖgithubᚗcomᚋvikelabsᚋlecshareᚑapiᚋgraphᚋmodelᚐClass(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5161,6 +5263,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_courses(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "classes":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_classes(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

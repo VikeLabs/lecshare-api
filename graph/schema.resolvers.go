@@ -25,7 +25,7 @@ func (r *classResolver) Resources(ctx context.Context, obj *model.Class, dateBef
 
 func (r *courseResolver) Classes(ctx context.Context, obj *model.Course, term *string) ([]*model.Class, error) {
 	if term != nil {
-		return r.Repository.ListClassesByTerm(ctx, obj, term)
+		return r.Repository.ListClassesByTerm(ctx, obj, *term)
 	}
 	return r.Repository.ListClasses(ctx, obj)
 }
@@ -80,6 +80,19 @@ func (r *queryResolver) Courses(ctx context.Context, schoolCode string, subjectC
 		return nil, fmt.Errorf("Sorry, not yet supported")
 	}
 	return r.Repository.ListCourses(ctx, &school)
+}
+
+func (r *queryResolver) Classes(ctx context.Context, schoolCode string, subjectCode string, courseCode string, term *string, section *string) ([]*model.Class, error) {
+	if term != nil {
+		return r.Repository.ListClassesByTerm(ctx, &model.Course{
+			PK: schoolCode,
+			SK: subjectCode + "#" + courseCode,
+		}, *term)
+	}
+	return r.Repository.ListClasses(ctx, &model.Course{
+		PK: schoolCode,
+		SK: subjectCode + "#" + courseCode,
+	})
 }
 
 func (r *resourceResolver) URL(ctx context.Context, obj *model.Resource) (string, error) {

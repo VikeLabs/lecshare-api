@@ -37,14 +37,14 @@ func (r *Repository) ListClasses(ctx context.Context, obj *model.Course) ([]*mod
 	return nil, nil
 }
 
-func (r *Repository) ListClassesByTerm(ctx context.Context, obj *model.Course, term *string) ([]*model.Class, error) {
+func (r *Repository) ListClassesByTerm(ctx context.Context, obj *model.Course, term string) ([]*model.Class, error) {
 	db := r.DynamoDB
 	table := db.Table(*r.TableName)
 
 	var classes []model.Class
 	var classesRef []*model.Class
 
-	table.Get("PK", obj.PK+"#"+obj.SK).Range("SK", dynamo.BeginsWith, *term).All(&classes)
+	table.Get("PK", obj.PK+"#"+obj.SK).Range("SK", dynamo.BeginsWith, term).All(&classes)
 
 	if len(classes) != 0 {
 		for i := 0; i < len(classes); i++ {
