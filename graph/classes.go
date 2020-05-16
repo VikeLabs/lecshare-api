@@ -93,3 +93,19 @@ func (r *Repository) CreateClass(ctx context.Context, input model.NewClass, scho
 	}
 	return &class, nil
 }
+
+func (r *Repository) GetProtectedClass(ctx context.Context, courseCode string, classCode string, accessKey string) (*model.Class, error) {
+	table := r.DynamoDB.Table(*r.TableName)
+	var class model.Class
+
+	err := table.Get("PK", courseCode).Range("SK", dynamo.Equal, classCode).OneWithContext(ctx, &class)
+	if err != nil {
+		return nil, fmt.Errorf("Unable find protected class")
+	}
+
+	// access key is enabled
+	if len(class.AccessKey) > 0 && accessKey != class.AccessKey {
+		return nil, fmt.Errorf("Unable find protected class")
+	}
+	return &class, nil
+}

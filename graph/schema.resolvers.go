@@ -95,6 +95,10 @@ func (r *queryResolver) Classes(ctx context.Context, schoolCode string, subjectC
 	})
 }
 
+func (r *queryResolver) ProtectedClass(ctx context.Context, courseCode string, classCode string, accessKey string) (*model.Class, error) {
+	return r.Repository.GetProtectedClass(ctx, courseCode, classCode, accessKey)
+}
+
 func (r *resourceResolver) URL(ctx context.Context, obj *model.Resource) (string, error) {
 	if len(*r.Repository.CDN) > 0 {
 		return r.Repository.PresignedURLGenerator.GenerateURL("/"+obj.ObjectKey, 60*time.Minute), nil

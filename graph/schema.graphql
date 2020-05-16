@@ -10,6 +10,8 @@ type Query {
     schools(code: String): [School]!
     courses(schoolCode: String! subjectCode: String courseCode: String): [Course]!
     classes(schoolCode: String! subjectCode: String! courseCode: String! term: String section: String): [Class]!
+    
+    protectedClass(courseCode: String! classCode: String! accessKey: String!): Class!
 }
 
 type Mutation {
