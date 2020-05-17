@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"os"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -14,14 +17,41 @@ import (
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 	"github.com/go-playground/validator/v10"
 	"github.com/guregu/dynamo"
+	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/jws"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/vikelabs/lecshare-api/graph"
 	"github.com/vikelabs/lecshare-api/graph/generated"
 	"github.com/vikelabs/lecshare-api/utils/bunnycdn"
 )
 
 var h *httpadapter.HandlerAdapter
+var keys *jwk.Set
 
 func lambdaHandler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
+	authHeader := req.Headers["Authorization"]
+	authHeader = strings.TrimSpace(authHeader)
+	authHeaderSegments := strings.Split(authHeader, " ")
+	if len(authHeaderSegments) == 2 && authHeaderSegments[0] == "Bearer" {
+		payloadBytes := []byte(authHeaderSegments[1])
+		_, err := jws.VerifyWithJWKSet(payloadBytes, keys, jws.DefaultJWKAcceptor)
+		if err == nil {
+			fmt.Println("Validily signed access token")
+			token, err := jwt.ParseBytes(payloadBytes,
+				jwt.WithAudience("2rt4ddvsjbndmovp9ug6tur2m"),
+				jwt.WithIssuer("https://cognito-idp.us-west-2.amazonaws.com/us-west-2_LTj42jgMX"),
+			)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				// inject the token related info into context.
+				ctx = context.WithValue(ctx, "jwt", token.AsMap)
+			}
+		} else {
+			fmt.Println("Invalid access_token.")
+		}
+	}
 	// passes in the APIGatewayProxyRequest as a context.
 	// c, _ := core.GetAPIGatewayContextFromContext(ctx)
 	res, err := h.ProxyWithContext(ctx, req)
@@ -44,6 +74,13 @@ func main() {
 		APIKey:   os.Getenv("CDN_API_KEY"),
 		Hostname: cdn,
 	}
+
+	k, err := jwk.Fetch("https://cognito-idp.us-west-2.amazonaws.com/us-west-2_LTj42jgMX/.well-known/jwks.json")
+	if err != nil {
+		log.Printf("failed to parse JWK: %s", err)
+		return
+	}
+	keys = k
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		Repository: graph.Repository{
