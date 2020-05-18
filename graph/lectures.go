@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/h2non/filetype"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -123,20 +122,11 @@ func (r *Repository) CreateLectureFromResource(ctx context.Context, schoolCode s
 
 func (r *Repository) ListLectures(ctx context.Context, obj *model.Class) ([]*model.Lecture, error) {
 	// converts slice types (slice of values to slice of ptrs)
-	// TODO sign with BunnyCDN pre-signed for security / CDN.
-	fmt.Println(obj)
-	fmt.Println(len(obj.Lectures))
 	if len(obj.Lectures) > 0 {
-
-		svc := s3.New(r.Session)
 		var lecturesRef []*model.Lecture
 		for i := 0; i < len(obj.Lectures); i++ {
 			Code := obj.Lectures[i].Audio
-			req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-				Bucket: r.AssetsBucketName,
-				Key:    Code,
-			})
-			presignedURL, _ := req.Presign(60 * time.Minute)
+			presignedURL := r.PresignedURLGenerator.GenerateURL("/"+*Code, 120*time.Minute)
 			obj.Lectures[i].Audio = &presignedURL
 			lecturesRef = append(lecturesRef, &obj.Lectures[i])
 		}

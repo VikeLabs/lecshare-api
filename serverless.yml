@@ -1,7 +1,7 @@
 service: lecshare-api
 custom:
   # Object Storage Bucket Names
-  generalBucket: assets-lecshare.oimo.ca
+  generalBucket: s3.lecshare.vikelabs.ca
   processingBucket: lecshare-audio-processing
   transcriptionBucket: lecshare-transcriptions
   # try to use the argument, then the provider stage
